@@ -148,7 +148,9 @@ button.b.verde{background:var(--verde)}
     <div><label>Fecha</label><input type="date" id="vFecha" required></div>
     <div><label>Unidad</label><select id="vEco" required onchange="opAuto()"></select></div>
     <div><label>Operador</label><input id="vOp"></div>
+    <div><label>Producto</label><input id="vProd" placeholder="Ej. maíz, cemento"></div>
     <div style="grid-column:span 2"><label>Ruta (del tabulador)</label><select id="vRuta" required onchange="rutaAuto()"></select></div>
+    <div class="full" id="vArtInfo" style="font-size:12px;color:var(--gris);padding:0 2px"></div>
     <div><label>Base</label><select id="vBase"><option value="PUE">Puebla</option><option value="HGO">Hidalgo</option><option value="AGS">Ags</option></select></div>
     <div><label>Toneladas</label><input type="number" id="vTon" min="0" step="0.01" required oninput="previewV()"></div>
     <div><label>Precio por tonelada $</label><input type="number" id="vPton" min="0" step="0.01" required oninput="previewV()"></div>
@@ -158,6 +160,12 @@ button.b.verde{background:var(--verde)}
     <div><label>Costo diesel $</label><input type="number" id="vDie" min="0" step="0.01" oninput="previewV()"></div>
     <div><label>Casetas $</label><input type="number" id="vCas" min="0" step="0.01" value="0" oninput="previewV()"></div>
     <div><label>Comisión operador $</label><input type="number" id="vCom" min="0" step="0.01" value="0" oninput="previewV()"></div>
+    <div><label>Enlonada $</label><input type="number" id="vEnl" min="0" step="0.01" value="0" oninput="previewV()"></div>
+    <div><label>Lavada $</label><input type="number" id="vLav" min="0" step="0.01" value="0" oninput="previewV()"></div>
+    <div><label>Carga telefónica $</label><input type="number" id="vTel" min="0" step="0.01" value="0" oninput="previewV()"></div>
+    <div><label>Vale combustible (folio)</label><input id="vVale" placeholder="V-1001"></div>
+    <div><label>Carta porte (folio)</label><input id="vCP" placeholder="CP-..."></div>
+    <div><label>Factura del viaje (folio)</label><input id="vFac" placeholder="F-..."></div>
     <div><label>¿Cliente retiene 4%?</label><select id="vRet" onchange="previewV()"><option value="1">Sí (persona moral)</option><option value="0">No (persona física)</option></select></div>
     <div class="full preview" id="pv"></div>
     <div class="full" style="display:flex;gap:8px"><button class="b" type="submit">Guardar viaje</button><button class="b sec" type="button" onclick="limpiarV()">Limpiar</button></div>
@@ -169,7 +177,7 @@ button.b.verde{background:var(--verde)}
 <!-- ============ RUTAS ============ -->
 <section class="tab" id="t-rutas">
   <h2>Tabulador de rutas — tu base de datos</h2>
-  <p class="aviso">Da de alta cada ruta una sola vez. Al elegirla en el Kardex se llenan solos: base, precio por tonelada, comisión del operador y casetas de referencia (editable por viaje).</p>
+  <p class="aviso">Da de alta cada ruta una sola vez. Al elegirla en el Kardex se llenan solos: base, precio por tonelada, comisión del operador, casetas y los otros gastos (enlonada, lavada, carga telefónica); todo editable por viaje.</p>
   <form class="f" onsubmit="return guardarRuta(event)">
     <input type="hidden" id="rId">
     <div style="grid-column:span 2"><label>Nombre de la ruta</label><input id="rNom" required placeholder="Puebla – CDMX"></div>
@@ -178,6 +186,9 @@ button.b.verde{background:var(--verde)}
     <div><label>Comisión operador $ (tabulada)</label><input type="number" id="rCom" min="0" step="0.01" required></div>
     <div><label>Casetas $ (referencia)</label><input type="number" id="rCas" min="0" step="0.01" value="0"></div>
     <div><label>Km ruta (referencia)</label><input type="number" id="rKm" min="0" step="1" value="0"></div>
+    <div><label>Enlonada</label><select id="rEnl"><option value="0">No aplica</option><option value="100">$100</option><option value="200">$200</option></select></div>
+    <div><label>Lavada</label><select id="rLav"><option value="0">No aplica</option><option value="300">$300</option></select></div>
+    <div><label>Carga telefónica</label><select id="rTel"><option value="0">No aplica</option><option value="200">$200</option></select></div>
     <div class="full" style="display:flex;gap:8px"><button class="b" type="submit">Guardar ruta</button><button class="b sec" type="button" onclick="limpiarR()">Limpiar</button></div>
   </form>
   <div class="filtros"><button class="b sec" onclick="csv('rutas')">Exportar CSV (Excel)</button></div>
@@ -209,7 +220,9 @@ button.b.verde{background:var(--verde)}
   <form class="f" onsubmit="return guardarMant(event)">
     <input type="hidden" id="mId">
     <div><label>Fecha</label><input type="date" id="mFecha" required></div>
-    <div><label>Unidad</label><select id="mEco" required></select></div>
+    <div><label>Unidad</label><select id="mEco" required onchange="mEquipos()"></select></div>
+    <div><label>Equipo reparado</label><select id="mEquipo"></select></div>
+    <div><label>Categoría</label><select id="mCat"><option>Mecánico</option><option>Eléctrico</option><option>Lubricante</option><option>Llantas</option></select></div>
     <div><label>Taller</label><select id="mTaller"><option value="Propio">Taller propio</option><option value="Externo">Taller externo</option></select></div>
     <div><label>Taller externo (nombre)</label><input id="mProv" placeholder="Solo si es externo"></div>
     <div style="grid-column:span 2"><label>Descripción</label><input id="mDes" required placeholder="Balatas eje trasero"></div>
@@ -232,6 +245,10 @@ button.b.verde{background:var(--verde)}
     <div><label>Base</label><select id="uBase"><option value="PUE">Puebla</option><option value="HGO">Hidalgo</option><option value="AGS">Ags</option></select></div>
     <div><label>Capacidad tanque (L)</label><input type="number" id="uTan" min="0" step="1" value="400"></div>
     <div><label>Objetivo rendimiento (km/L)</label><input type="number" id="uObj" min="0" step="0.01" value="2.60"></div>
+    <div><label>Articulación</label><select id="uArt" onchange="uArtToggle()"><option value="Sencillo">Sencillo</option><option value="Full">Full (doble)</option></select></div>
+    <div><label>Tolva / caja 1 (económico)</label><input id="uT1" placeholder="TV-01"></div>
+    <div id="uDollyBox" style="display:none"><label>Dolly (económico)</label><input id="uDolly" placeholder="DL-01"></div>
+    <div id="uT2Box" style="display:none"><label>Tolva 2 (económico)</label><input id="uT2" placeholder="TV-02"></div>
     <div class="full" style="display:flex;gap:8px"><button class="b" type="submit">Guardar unidad</button><button class="b sec" type="button" onclick="limpiarU()">Limpiar</button></div>
   </form>
   <div class="tw"><table id="tblUnidades"></table></div>
@@ -288,10 +305,13 @@ async function api(cuerpo){
 function guardarLocal(){try{if(lsOk())localStorage.setItem(LK,JSON.stringify(S))}catch(e){}}
 function normalizar(d){
   if(!d)return d;
-  d.rutas=d.rutas||[];d.mants=d.mants||[];d.del=d.del||{};
+  d.unidades=d.unidades||[];d.viajes=d.viajes||[];d.cargas=d.cargas||[];d.rutas=d.rutas||[];d.mants=d.mants||[];d.del=d.del||{};
   d.cfg=d.cfg||{};if(d.cfg.precio==null)d.cfg.precio=26.50;if(d.cfg.iva==null)d.cfg.iva=16;if(d.cfg.ret==null)d.cfg.ret=4;if(d.cfg.ta==null)d.cfg.ta=6;if(d.cfg.tr==null)d.cfg.tr=12;d.cfg.ts=d.cfg.ts||1;
   ['unidades','rutas','viajes','cargas','mants'].forEach(function(c){(d[c]||[]).forEach(function(x){if(!x.ts)x.ts=1;delete x._s})});
-  d.mants.forEach(function(m){if(!m.taller)m.taller=(m.tipo==='Mano de obra'||m.tipo==='Refacciones')?'Propio':(m.taller||'Propio');if(m.prov==null)m.prov='';delete m.tipo});
+  d.unidades.forEach(function(u){if(!u.articul)u.articul='Sencillo';if(u.t1==null)u.t1='';if(u.dolly==null)u.dolly='';if(u.t2==null)u.t2=''});
+  d.viajes.forEach(function(v){if(v.prod==null)v.prod='';if(v.vale==null)v.vale='';if(v.cp==null)v.cp='';if(v.fac==null)v.fac='';if(v.enl==null)v.enl=0;if(v.lav==null)v.lav=0;if(v.tel==null)v.tel=0});
+  d.rutas.forEach(function(r){if(r.enl==null)r.enl=0;if(r.lav==null)r.lav=0;if(r.tel==null)r.tel=0});
+  d.mants.forEach(function(m){if(!m.taller)m.taller=(m.tipo==='Mano de obra'||m.tipo==='Refacciones')?'Propio':(m.taller||'Propio');if(m.prov==null)m.prov='';if(m.equipo==null)m.equipo=m.eco||'';if(!m.cat)m.cat='Mecánico';delete m.tipo});
   return d;
 }
 function mergeCol(a,b,key){
@@ -403,7 +423,10 @@ function subViaje(v){return n(v.ton)*n(v.pton)}
 function ivaViaje(v){return subViaje(v)*n(S.cfg.iva)/100}
 function retViaje(v){return v.ret4?subViaje(v)*n(S.cfg.ret)/100:0}
 function totViaje(v){return subViaje(v)+ivaViaje(v)-retViaje(v)}
-function utilViaje(v){return subViaje(v)-n(v.die)-n(v.cas)-n(v.com)}
+function otrosViaje(v){return n(v.enl)+n(v.lav)+n(v.tel)}
+function utilViaje(v){return subViaje(v)-n(v.die)-n(v.cas)-n(v.com)-otrosViaje(v)}
+function equiposUnidad(eco){var u=S.unidades.find(function(x){return x.eco===eco});var arr=[{v:eco,l:eco+' (unidad)'}];if(!u)return arr;if(u.t1)arr.push({v:u.t1,l:u.t1+' (tolva 1)'});if(u.articul==='Full'){if(u.dolly)arr.push({v:u.dolly,l:u.dolly+' (dolly)'});if(u.t2)arr.push({v:u.t2,l:u.t2+' (tolva 2)'})}return arr}
+function txtEquipo(u){if(!u)return '';if(u.articul==='Full')return '🔗 FULL: '+u.eco+(u.t1?' + '+u.t1:'')+(u.dolly?' + '+u.dolly:'')+(u.t2?' + '+u.t2:'');return '🔗 SENCILLO: '+u.eco+(u.t1?' + '+u.t1:'')}
 function fV(){return S.viajes.filter(function(v){return enMes(v.fecha)&&pasaBase(v.base)})}
 function rendGlobal(vs){
   var km=0,lt=0;
@@ -474,8 +497,8 @@ function renderDash(){
    '<div class="kpi diesel"><span>Comisiones operador</span><b>'+fMX.format(com)+'</b></div>'+
    '<div class="kpi diesel"><span>Mantenimiento</span><b>'+fMX.format(mt)+'</b></div>'+
    '<div class="kpi tot'+(neta<0?' neg':'')+'"><span>Utilidad neta del periodo</span><b>'+fMX.format(neta)+'</b></div>';
-  var h='<thead><tr><th>Unidad</th><th>Base</th><th>Viajes</th><th>Ton</th><th>Subtotal</th><th>Diesel</th><th>Casetas</th><th>Comisión op.</th><th>Utilidad viajes</th><th>Mant. propio</th><th>Mant. externo</th><th>Mant. total</th><th>Utilidad neta</th></tr></thead><tbody>';
-  var T={vi:0,ton:0,sub:0,die:0,cas:0,com:0,uv:0,mp:0,me:0,mt:0,neta:0};
+  var h='<thead><tr><th>Unidad</th><th>Base</th><th>Viajes</th><th>Ton</th><th>Subtotal</th><th>Diesel</th><th>Casetas</th><th>Comisión op.</th><th>Otros</th><th>Utilidad viajes</th><th>Mant. propio</th><th>Mant. externo</th><th>Mant. total</th><th>Utilidad neta</th></tr></thead><tbody>';
+  var T={vi:0,ton:0,sub:0,die:0,cas:0,com:0,otros:0,uv:0,mp:0,me:0,mt:0,neta:0};
   S.unidades.filter(function(u){return pasaBase(u.base)}).forEach(function(u){
     var vs2=vs.filter(function(v){return v.eco===u.eco});
     var ton=vs2.reduce(function(a,v){return a+n(v.ton)},0);
@@ -483,13 +506,14 @@ function renderDash(){
     var die=vs2.reduce(function(a,v){return a+n(v.die)},0);
     var cas=vs2.reduce(function(a,v){return a+n(v.cas)},0);
     var com2=vs2.reduce(function(a,v){return a+n(v.com)},0);
+    var otros2=vs2.reduce(function(a,v){return a+otrosViaje(v)},0);
     var uv2=vs2.reduce(function(a,v){return a+utilViaje(v)},0);
     var m=mantUnidad(u.eco);
     var neta2=uv2-m.tot;
-    T.vi+=vs2.length;T.ton+=ton;T.sub+=sub2;T.die+=die;T.cas+=cas;T.com+=com2;T.uv+=uv2;T.mp+=m.prop;T.me+=m.ext;T.mt+=m.tot;T.neta+=neta2;
-    h+='<tr><td><b>'+esc(u.eco)+'</b> <small style="color:var(--gris)">'+esc(u.op||'')+'</small></td><td>'+badge(u.base)+'</td><td class="num">'+vs2.length+'</td><td class="num">'+f2(ton)+'</td><td class="num tot">'+fMX.format(sub2)+'</td><td class="num diesel">'+fMX.format(die)+'</td><td class="num">'+fMX.format(cas)+'</td><td class="num diesel">'+fMX.format(com2)+'</td><td class="num tot">'+fMX.format(uv2)+'</td><td class="num diesel">'+fMX.format(m.prop)+'</td><td class="num diesel">'+fMX.format(m.ext)+'</td><td class="num diesel">'+fMX.format(m.tot)+'</td><td class="num '+(neta2<0?'neg':'tot')+'"><b>'+fMX.format(neta2)+'</b></td></tr>';
+    T.vi+=vs2.length;T.ton+=ton;T.sub+=sub2;T.die+=die;T.cas+=cas;T.com+=com2;T.otros+=otros2;T.uv+=uv2;T.mp+=m.prop;T.me+=m.ext;T.mt+=m.tot;T.neta+=neta2;
+    h+='<tr><td><b>'+esc(u.eco)+'</b> <small style="color:var(--gris)">'+esc(u.op||'')+'</small></td><td>'+badge(u.base)+'</td><td class="num">'+vs2.length+'</td><td class="num">'+f2(ton)+'</td><td class="num tot">'+fMX.format(sub2)+'</td><td class="num diesel">'+fMX.format(die)+'</td><td class="num">'+fMX.format(cas)+'</td><td class="num diesel">'+fMX.format(com2)+'</td><td class="num diesel">'+fMX.format(otros2)+'</td><td class="num tot">'+fMX.format(uv2)+'</td><td class="num diesel">'+fMX.format(m.prop)+'</td><td class="num diesel">'+fMX.format(m.ext)+'</td><td class="num diesel">'+fMX.format(m.tot)+'</td><td class="num '+(neta2<0?'neg':'tot')+'"><b>'+fMX.format(neta2)+'</b></td></tr>';
   });
-  h+='</tbody><tfoot><tr><td colspan="2">TOTALES</td><td class="num">'+T.vi+'</td><td class="num">'+f2(T.ton)+'</td><td class="num">'+fMX.format(T.sub)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.die)+'</td><td class="num">'+fMX.format(T.cas)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.com)+'</td><td class="num" style="color:var(--ambar)">'+fMX.format(T.uv)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.mp)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.me)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.mt)+'</td><td class="num" style="color:'+(T.neta<0?'var(--rojo)':'var(--ambar)')+'">'+fMX.format(T.neta)+'</td></tr></tfoot>';
+  h+='</tbody><tfoot><tr><td colspan="2">TOTALES</td><td class="num">'+T.vi+'</td><td class="num">'+f2(T.ton)+'</td><td class="num">'+fMX.format(T.sub)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.die)+'</td><td class="num">'+fMX.format(T.cas)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.com)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.otros)+'</td><td class="num" style="color:var(--ambar)">'+fMX.format(T.uv)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.mp)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.me)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.mt)+'</td><td class="num" style="color:'+(T.neta<0?'var(--rojo)':'var(--ambar)')+'">'+fMX.format(T.neta)+'</td></tr></tfoot>';
   $('tblER').innerHTML=h;
   var sh='';
   S.unidades.filter(function(u){return pasaBase(u.base)}).forEach(function(u){
@@ -513,26 +537,27 @@ function accBtns(t,id){
 }
 function renderViajes(){
   var vs=fV().slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'')});
-  var h='<thead><tr><th>Fecha</th><th>Unidad</th><th>Base</th><th>Ruta</th><th>Ton</th><th>$/Ton</th><th>Subtotal</th><th>IVA '+f0(S.cfg.iva)+'%</th><th>Ret. '+f0(S.cfg.ret)+'%</th><th>Total factura</th><th>Km</th><th>Lts</th><th>Diesel $</th><th>Casetas $</th><th>Comisión $</th><th>Utilidad $</th><th>Rend.</th><th></th></tr></thead><tbody>';
-  var T={ton:0,sub:0,iva:0,ret:0,tot:0,km:0,lts:0,die:0,cas:0,com:0,uti:0};
+  var h='<thead><tr><th>Fecha</th><th>Unidad</th><th>Base</th><th>Ruta</th><th>Producto</th><th>Ton</th><th>$/Ton</th><th>Subtotal</th><th>IVA '+f0(S.cfg.iva)+'%</th><th>Ret. '+f0(S.cfg.ret)+'%</th><th>Total factura</th><th>Km</th><th>Lts</th><th>Diesel $</th><th>Casetas $</th><th>Comisión $</th><th>Otros $</th><th>Utilidad $</th><th>Rend.</th><th>Vale</th><th>C. porte</th><th>Factura</th><th></th></tr></thead><tbody>';
+  var T={ton:0,sub:0,iva:0,ret:0,tot:0,km:0,lts:0,die:0,cas:0,com:0,otros:0,uti:0};
   vs.forEach(function(v){
-    var km=kmViaje(v),sub=subViaje(v),iva=ivaViaje(v),ret=retViaje(v),tot=totViaje(v),uti=utilViaje(v);
+    var km=kmViaje(v),sub=subViaje(v),iva=ivaViaje(v),ret=retViaje(v),tot=totViaje(v),uti=utilViaje(v),otros=otrosViaje(v);
     var r=(n(v.lts)>0&&km>0)?km/n(v.lts):null;
-    T.ton+=n(v.ton);T.sub+=sub;T.iva+=iva;T.ret+=ret;T.tot+=tot;T.km+=km;T.lts+=n(v.lts);T.die+=n(v.die);T.cas+=n(v.cas);T.com+=n(v.com);T.uti+=uti;
-    h+='<tr><td>'+esc(v.fecha)+'</td><td><b>'+esc(v.eco)+'</b></td><td>'+badge(v.base)+'</td><td>'+esc(v.ruta)+'</td>'+
+    T.ton+=n(v.ton);T.sub+=sub;T.iva+=iva;T.ret+=ret;T.tot+=tot;T.km+=km;T.lts+=n(v.lts);T.die+=n(v.die);T.cas+=n(v.cas);T.com+=n(v.com);T.otros+=otros;T.uti+=uti;
+    h+='<tr><td>'+esc(v.fecha)+'</td><td><b>'+esc(v.eco)+'</b></td><td>'+badge(v.base)+'</td><td>'+esc(v.ruta)+'</td><td>'+esc(v.prod||'')+'</td>'+
        '<td class="num">'+f2(v.ton)+'</td><td class="num">'+f2(v.pton)+'</td><td class="num tot">'+fMX.format(sub)+'</td><td class="num">'+fMX.format(iva)+'</td><td class="num">'+(v.ret4?fMX.format(ret):'—')+'</td><td class="num tot">'+fMX.format(tot)+'</td>'+
-       '<td class="num km">'+f0(km)+'</td><td class="num diesel">'+f2(v.lts)+'</td><td class="num diesel">'+fMX.format(n(v.die))+'</td><td class="num">'+fMX.format(n(v.cas))+'</td><td class="num diesel">'+fMX.format(n(v.com))+'</td>'+
+       '<td class="num km">'+f0(km)+'</td><td class="num diesel">'+f2(v.lts)+'</td><td class="num diesel">'+fMX.format(n(v.die))+'</td><td class="num">'+fMX.format(n(v.cas))+'</td><td class="num diesel">'+fMX.format(n(v.com))+'</td><td class="num diesel">'+fMX.format(otros)+'</td>'+
        '<td class="num '+(uti<0?'neg':'tot')+'"><b>'+fMX.format(uti)+'</b></td><td class="num rend">'+(r==null?'—':f2(r))+'</td>'+
+       '<td>'+esc(v.vale||'')+'</td><td>'+esc(v.cp||'')+'</td><td>'+esc(v.fac||'')+'</td>'+
        '<td>'+accBtns('v',v.id)+'</td></tr>';
   });
   var rg=rendGlobal(vs);
-  h+='</tbody><tfoot><tr><td colspan="4">TOTALES ('+vs.length+' viajes)</td><td class="num">'+f2(T.ton)+'</td><td></td><td class="num">'+fMX.format(T.sub)+'</td><td class="num">'+fMX.format(T.iva)+'</td><td class="num">'+fMX.format(T.ret)+'</td><td class="num">'+fMX.format(T.tot)+'</td><td class="num" style="color:var(--azul)">'+f0(T.km)+'</td><td class="num" style="color:var(--rojo)">'+f2(T.lts)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.die)+'</td><td class="num">'+fMX.format(T.cas)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.com)+'</td><td class="num" style="color:var(--ambar)">'+fMX.format(T.uti)+'</td><td class="num" style="color:var(--morado)">'+(rg==null?'—':f2(rg))+'</td><td></td></tr></tfoot>';
+  h+='</tbody><tfoot><tr><td colspan="5">TOTALES ('+vs.length+' viajes)</td><td class="num">'+f2(T.ton)+'</td><td></td><td class="num">'+fMX.format(T.sub)+'</td><td class="num">'+fMX.format(T.iva)+'</td><td class="num">'+fMX.format(T.ret)+'</td><td class="num">'+fMX.format(T.tot)+'</td><td class="num" style="color:var(--azul)">'+f0(T.km)+'</td><td class="num" style="color:var(--rojo)">'+f2(T.lts)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.die)+'</td><td class="num">'+fMX.format(T.cas)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.com)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.otros)+'</td><td class="num" style="color:var(--ambar)">'+fMX.format(T.uti)+'</td><td class="num" style="color:var(--morado)">'+(rg==null?'—':f2(rg))+'</td><td></td><td></td><td></td><td></td></tr></tfoot>';
   $('tblViajes').innerHTML=h;
 }
 function renderRutas(){
-  var h='<thead><tr><th>Ruta</th><th>Base</th><th>$/Ton</th><th>Comisión operador $</th><th>Casetas ref. $</th><th>Km ref.</th><th></th></tr></thead><tbody>';
+  var h='<thead><tr><th>Ruta</th><th>Base</th><th>$/Ton</th><th>Comisión operador $</th><th>Casetas ref. $</th><th>Km ref.</th><th>Enlonada</th><th>Lavada</th><th>C. tel.</th><th></th></tr></thead><tbody>';
   S.rutas.slice().sort(function(a,b){return (a.base+a.nom).localeCompare(b.base+b.nom)}).forEach(function(r){
-    h+='<tr><td><b>'+esc(r.nom)+'</b></td><td>'+badge(r.base)+'</td><td class="num tot">'+fMX.format(n(r.pton))+'</td><td class="num diesel">'+fMX.format(n(r.com))+'</td><td class="num">'+fMX.format(n(r.cas))+'</td><td class="num km">'+f0(r.km)+'</td><td>'+accBtns('r',r.id)+'</td></tr>';
+    h+='<tr><td><b>'+esc(r.nom)+'</b></td><td>'+badge(r.base)+'</td><td class="num tot">'+fMX.format(n(r.pton))+'</td><td class="num diesel">'+fMX.format(n(r.com))+'</td><td class="num">'+fMX.format(n(r.cas))+'</td><td class="num km">'+f0(r.km)+'</td><td class="num">'+(n(r.enl)?fMX.format(n(r.enl)):'—')+'</td><td class="num">'+(n(r.lav)?fMX.format(n(r.lav)):'—')+'</td><td class="num">'+(n(r.tel)?fMX.format(n(r.tel)):'—')+'</td><td>'+accBtns('r',r.id)+'</td></tr>';
   });
   $('tblRutas').innerHTML=h+'</tbody>';
 }
@@ -558,19 +583,20 @@ function renderMant(){
    '<div class="kpi diesel"><span>Taller propio</span><b>'+fMX.format(prop)+'</b></div>'+
    '<div class="kpi diesel"><span>Taller externo</span><b>'+fMX.format(ext)+'</b></div>'+
    '<div class="kpi diesel"><span>Mantenimiento total</span><b>'+fMX.format(prop+ext)+'</b></div>';
-  var h='<thead><tr><th>Fecha</th><th>Unidad</th><th>Taller</th><th>Proveedor</th><th>Descripción</th><th>Importe $</th><th></th></tr></thead><tbody>';
+  var h='<thead><tr><th>Fecha</th><th>Unidad</th><th>Equipo reparado</th><th>Categoría</th><th>Taller</th><th>Proveedor</th><th>Descripción</th><th>Importe $</th><th></th></tr></thead><tbody>';
   ms.forEach(function(m){
-    h+='<tr><td>'+esc(m.fecha)+'</td><td><b>'+esc(m.eco)+'</b></td><td>'+(m.taller==='Externo'?'<span class="badge EXT">EXTERNO</span>':'<span class="badge PRO">PROPIO</span>')+'</td><td>'+esc(m.prov)+'</td><td>'+esc(m.des)+'</td><td class="num diesel">'+fMX.format(n(m.imp))+'</td><td>'+accBtns('m',m.id)+'</td></tr>';
+    h+='<tr><td>'+esc(m.fecha)+'</td><td><b>'+esc(m.eco)+'</b></td><td>'+esc(m.equipo||m.eco)+'</td><td>'+esc(m.cat||'')+'</td><td>'+(m.taller==='Externo'?'<span class="badge EXT">EXTERNO</span>':'<span class="badge PRO">PROPIO</span>')+'</td><td>'+esc(m.prov)+'</td><td>'+esc(m.des)+'</td><td class="num diesel">'+fMX.format(n(m.imp))+'</td><td>'+accBtns('m',m.id)+'</td></tr>';
   });
-  h+='</tbody><tfoot><tr><td colspan="5">TOTAL ('+ms.length+' registros)</td><td class="num" style="color:var(--rojo)">'+fMX.format(prop+ext)+'</td><td></td></tr></tfoot>';
+  h+='</tbody><tfoot><tr><td colspan="7">TOTAL ('+ms.length+' registros)</td><td class="num" style="color:var(--rojo)">'+fMX.format(prop+ext)+'</td><td></td></tr></tfoot>';
   $('tblMant').innerHTML=h;
 }
 function renderUnidades(){
-  var h='<thead><tr><th>Económico</th><th>Placas</th><th>Operador</th><th>Base</th><th>Tanque L</th><th>Objetivo km/L</th><th>Rend. actual</th><th>Semáforo</th><th></th></tr></thead><tbody>';
+  var h='<thead><tr><th>Económico</th><th>Placas</th><th>Operador</th><th>Base</th><th>Articulación</th><th>Tanque L</th><th>Objetivo km/L</th><th>Rend. actual</th><th>Semáforo</th><th></th></tr></thead><tbody>';
   S.unidades.forEach(function(u){
     var r=rendUnidad(u.eco),c=semClase(r,u.obj);
     var e=c==='v'?'🟢':c==='a'?'🟡':c==='r'?'🔴':'⚪';
-    h+='<tr><td><b>'+esc(u.eco)+'</b></td><td>'+esc(u.pla)+'</td><td>'+esc(u.op)+'</td><td>'+badge(u.base)+'</td><td class="num">'+f0(u.tan)+'</td><td class="num rend">'+f2(u.obj)+'</td><td class="num rend">'+(r==null?'N/D':f2(r))+'</td><td>'+e+'</td>'+
+    var eq=[u.t1,u.dolly,u.t2].filter(Boolean).join(' · ');
+    h+='<tr><td><b>'+esc(u.eco)+'</b></td><td>'+esc(u.pla)+'</td><td>'+esc(u.op)+'</td><td>'+badge(u.base)+'</td><td>'+(u.articul==='Full'?'<span class="badge EXT">FULL</span>':'<span class="badge PRO">SENCILLO</span>')+(eq?' <small style="color:var(--gris)">'+esc(eq)+'</small>':'')+'</td><td class="num">'+f0(u.tan)+'</td><td class="num rend">'+f2(u.obj)+'</td><td class="num rend">'+(r==null?'N/D':f2(r))+'</td><td>'+e+'</td>'+
        '<td>'+accBtns('u',u.eco)+'</td></tr>';
   });
   $('tblUnidades').innerHTML=h+'</tbody>';
@@ -580,6 +606,7 @@ function llenarSelects(){
   ['vEco','cEco','mEco'].forEach(function(id){var s=$(id),val=s.value;s.innerHTML=opU;if(val)s.value=val});
   var opR='<option value="">— Elegir ruta —</option>'+S.rutas.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.nom)+' ('+esc(r.base)+')</option>'}).join('');
   var s=$('vRuta'),val=s.value;s.innerHTML=opR;if(val)s.value=val;
+  mEquipos();
 }
 
 /* ================= BORRADO DOBLE TOQUE ================= */
@@ -621,11 +648,11 @@ function ejecutarBorrado(t,id){
 }
 
 /* ================= CRUD VIAJES ================= */
-function opAuto(){var u=S.unidades.find(function(x){return x.eco===$('vEco').value});if(u)$('vOp').value=u.op||''}
+function opAuto(){var u=S.unidades.find(function(x){return x.eco===$('vEco').value});if(u&&!$('vId').value)$('vOp').value=u.op||'';$('vArtInfo').innerHTML=u?txtEquipo(u):''}
 function rutaAuto(){
   var r=S.rutas.find(function(x){return x.id===$('vRuta').value});
   if(!r)return;
-  $('vBase').value=r.base;$('vPton').value=r.pton;$('vCas').value=r.cas;$('vCom').value=r.com;
+  $('vBase').value=r.base;$('vPton').value=r.pton;$('vCas').value=r.cas;$('vCom').value=r.com;$('vEnl').value=n(r.enl);$('vLav').value=n(r.lav);$('vTel').value=n(r.tel);
   previewV();
 }
 function dieselAuto(){$('vDie').value=(n($('vLts').value)*n(S.cfg.precio)).toFixed(2)}
@@ -634,15 +661,16 @@ function previewV(){
   var iva=sub*n(S.cfg.iva)/100;
   var ret=$('vRet').value==='1'?sub*n(S.cfg.ret)/100:0;
   var tot=sub+iva-ret;
-  var uti=sub-n($('vDie').value)-n($('vCas').value)-n($('vCom').value);
-  $('pv').innerHTML='<span>Subtotal: <b>'+fMX.format(sub)+'</b></span><span>IVA '+f0(S.cfg.iva)+'%: <b>'+fMX.format(iva)+'</b></span><span>Retención '+f0(S.cfg.ret)+'%: <b>'+fMX.format(ret)+'</b></span><span>Total factura: <b>'+fMX.format(tot)+'</b></span><span class="u">Utilidad del viaje: <b>'+fMX.format(uti)+'</b></span>';
+  var otros=n($('vEnl').value)+n($('vLav').value)+n($('vTel').value);
+  var uti=sub-n($('vDie').value)-n($('vCas').value)-n($('vCom').value)-otros;
+  $('pv').innerHTML='<span>Subtotal: <b>'+fMX.format(sub)+'</b></span><span>IVA '+f0(S.cfg.iva)+'%: <b>'+fMX.format(iva)+'</b></span><span>Retención '+f0(S.cfg.ret)+'%: <b>'+fMX.format(ret)+'</b></span><span>Total factura: <b>'+fMX.format(tot)+'</b></span><span>Otros gastos: <b>'+fMX.format(otros)+'</b></span><span class="u">Utilidad del viaje: <b>'+fMX.format(uti)+'</b></span>';
 }
 function guardarViaje(e){
   e.preventDefault();
   if(n($('vKmF').value)<n($('vKmI').value)){toast('El km final no puede ser menor que el km inicial.',1);return false}
   var rr=S.rutas.find(function(x){return x.id===$('vRuta').value});
   if(!rr){toast('Elige una ruta del tabulador (o dala de alta primero).',1);return false}
-  var o={id:$('vId').value||uid('v'),fecha:$('vFecha').value,eco:$('vEco').value,op:$('vOp').value,ruta:rr.nom,base:$('vBase').value,ton:n($('vTon').value),pton:n($('vPton').value),kmi:n($('vKmI').value),kmf:n($('vKmF').value),lts:n($('vLts').value),die:n($('vDie').value),cas:n($('vCas').value),com:n($('vCom').value),ret4:$('vRet').value==='1'?1:0,ts:ahora()};
+  var o={id:$('vId').value||uid('v'),fecha:$('vFecha').value,eco:$('vEco').value,op:$('vOp').value,ruta:rr.nom,base:$('vBase').value,prod:$('vProd').value,ton:n($('vTon').value),pton:n($('vPton').value),kmi:n($('vKmI').value),kmf:n($('vKmF').value),lts:n($('vLts').value),die:n($('vDie').value),cas:n($('vCas').value),com:n($('vCom').value),enl:n($('vEnl').value),lav:n($('vLav').value),tel:n($('vTel').value),vale:$('vVale').value,cp:$('vCP').value,fac:$('vFac').value,ret4:$('vRet').value==='1'?1:0,ts:ahora()};
   var i=S.viajes.findIndex(function(x){return x.id===o.id});
   if(i>=0)S.viajes[i]=o;else S.viajes.push(o);
   limpiarV();persistir();pintar();toast('Viaje guardado');return false;
@@ -652,23 +680,24 @@ function editV(id){
   tab('kardex');llenarSelects();
   $('vId').value=v.id;$('vFecha').value=v.fecha;$('vEco').value=v.eco;$('vOp').value=v.op;
   var r=S.rutas.find(function(x){return x.nom===v.ruta});$('vRuta').value=r?r.id:'';
-  $('vBase').value=v.base||'PUE';$('vTon').value=v.ton;$('vPton').value=v.pton;
-  $('vKmI').value=v.kmi;$('vKmF').value=v.kmf;$('vLts').value=v.lts;$('vDie').value=v.die;$('vCas').value=v.cas;$('vCom').value=v.com;$('vRet').value=v.ret4?'1':'0';
-  previewV();
+  $('vBase').value=v.base||'PUE';$('vProd').value=v.prod||'';$('vTon').value=v.ton;$('vPton').value=v.pton;
+  $('vKmI').value=v.kmi;$('vKmF').value=v.kmf;$('vLts').value=v.lts;$('vDie').value=v.die;$('vCas').value=v.cas;$('vCom').value=v.com;
+  $('vEnl').value=n(v.enl);$('vLav').value=n(v.lav);$('vTel').value=n(v.tel);$('vVale').value=v.vale||'';$('vCP').value=v.cp||'';$('vFac').value=v.fac||'';$('vRet').value=v.ret4?'1':'0';
+  opAuto();previewV();
 }
-function limpiarV(){['vId','vFecha','vOp','vKmI','vKmF','vLts','vDie','vTon','vPton'].forEach(function(i){$(i).value=''});$('vRuta').value='';$('vCas').value='0';$('vCom').value='0';$('vRet').value='1';$('pv').innerHTML='';}
+function limpiarV(){['vId','vFecha','vOp','vKmI','vKmF','vLts','vDie','vTon','vPton','vProd','vVale','vCP','vFac'].forEach(function(i){$(i).value=''});$('vRuta').value='';$('vCas').value='0';$('vCom').value='0';$('vEnl').value='0';$('vLav').value='0';$('vTel').value='0';$('vRet').value='1';$('pv').innerHTML='';$('vArtInfo').innerHTML='';}
 
 /* ================= CRUD RUTAS ================= */
 function guardarRuta(e){
   e.preventDefault();
-  var o={id:$('rId').value||uid('r'),nom:$('rNom').value.trim(),base:$('rBase').value,pton:n($('rPton').value),com:n($('rCom').value),cas:n($('rCas').value),km:n($('rKm').value),ts:ahora()};
+  var o={id:$('rId').value||uid('r'),nom:$('rNom').value.trim(),base:$('rBase').value,pton:n($('rPton').value),com:n($('rCom').value),cas:n($('rCas').value),km:n($('rKm').value),enl:n($('rEnl').value),lav:n($('rLav').value),tel:n($('rTel').value),ts:ahora()};
   if(!$('rId').value&&S.rutas.some(function(r){return r.nom.toLowerCase()===o.nom.toLowerCase()})){toast('Ya existe una ruta con ese nombre en el tabulador.',1);return false}
   var i=S.rutas.findIndex(function(x){return x.id===o.id});
   if(i>=0)S.rutas[i]=o;else S.rutas.push(o);
   limpiarR();persistir();pintar();toast('Ruta guardada en el tabulador');return false;
 }
-function editR(id){var r=S.rutas.find(function(x){return x.id===id});if(!r)return;tab('rutas');$('rId').value=r.id;$('rNom').value=r.nom;$('rBase').value=r.base;$('rPton').value=r.pton;$('rCom').value=r.com;$('rCas').value=r.cas;$('rKm').value=r.km}
-function limpiarR(){['rId','rNom'].forEach(function(i){$(i).value=''});$('rPton').value='';$('rCom').value='';$('rCas').value='0';$('rKm').value='0'}
+function editR(id){var r=S.rutas.find(function(x){return x.id===id});if(!r)return;tab('rutas');$('rId').value=r.id;$('rNom').value=r.nom;$('rBase').value=r.base;$('rPton').value=r.pton;$('rCom').value=r.com;$('rCas').value=r.cas;$('rKm').value=r.km;$('rEnl').value=n(r.enl);$('rLav').value=n(r.lav);$('rTel').value=n(r.tel)}
+function limpiarR(){['rId','rNom'].forEach(function(i){$(i).value=''});$('rPton').value='';$('rCom').value='';$('rCas').value='0';$('rKm').value='0';$('rEnl').value='0';$('rLav').value='0';$('rTel').value='0'}
 
 /* ================= CRUD CARGAS ================= */
 function impAuto(){$('cImp').value=(n($('cLts').value)*n($('cPre').value)).toFixed(2)}
@@ -685,18 +714,19 @@ function limpiarC(){['cId','cFecha','cFolio','cEst','cLts','cPre','cImp','cOdo']
 /* ================= CRUD MANTENIMIENTO ================= */
 function guardarMant(e){
   e.preventDefault();
-  var o={id:$('mId').value||uid('m'),fecha:$('mFecha').value,eco:$('mEco').value,taller:$('mTaller').value,prov:$('mTaller').value==='Externo'?$('mProv').value:'',des:$('mDes').value,imp:n($('mImp').value),ts:ahora()};
+  var o={id:$('mId').value||uid('m'),fecha:$('mFecha').value,eco:$('mEco').value,equipo:$('mEquipo').value||$('mEco').value,cat:$('mCat').value,taller:$('mTaller').value,prov:$('mTaller').value==='Externo'?$('mProv').value:'',des:$('mDes').value,imp:n($('mImp').value),ts:ahora()};
   var i=S.mants.findIndex(function(x){return x.id===o.id});
   if(i>=0)S.mants[i]=o;else S.mants.push(o);
   limpiarM();persistir();pintar();toast('Gasto de mantenimiento guardado');return false;
 }
-function editM(id){var m=S.mants.find(function(x){return x.id===id});if(!m)return;tab('mant');llenarSelects();$('mId').value=m.id;$('mFecha').value=m.fecha;$('mEco').value=m.eco;$('mTaller').value=m.taller||'Propio';$('mProv').value=m.prov||'';$('mDes').value=m.des;$('mImp').value=m.imp}
-function limpiarM(){['mId','mFecha','mDes','mImp','mProv'].forEach(function(i){$(i).value=''});$('mTaller').value='Propio'}
+function editM(id){var m=S.mants.find(function(x){return x.id===id});if(!m)return;tab('mant');llenarSelects();$('mId').value=m.id;$('mFecha').value=m.fecha;$('mEco').value=m.eco;mEquipos();$('mEquipo').value=m.equipo||m.eco;$('mCat').value=m.cat||'Mecánico';$('mTaller').value=m.taller||'Propio';$('mProv').value=m.prov||'';$('mDes').value=m.des;$('mImp').value=m.imp}
+function limpiarM(){['mId','mFecha','mDes','mImp','mProv'].forEach(function(i){$(i).value=''});$('mTaller').value='Propio';$('mCat').value='Mecánico';mEquipos()}
+function mEquipos(){var s=$('mEquipo');if(!s)return;var arr=equiposUnidad($('mEco').value),val=s.value;s.innerHTML=arr.map(function(e){return '<option value="'+esc(e.v)+'">'+esc(e.l)+'</option>'}).join('');if(val&&arr.some(function(e){return e.v===val}))s.value=val}
 
 /* ================= CRUD UNIDADES ================= */
 function guardarUnidad(e){
   e.preventDefault();
-  var o={eco:$('uEco').value.trim(),pla:$('uPla').value,op:$('uOp').value,base:$('uBase').value,tan:n($('uTan').value),obj:n($('uObj').value),ts:ahora()};
+  var o={eco:$('uEco').value.trim(),pla:$('uPla').value,op:$('uOp').value,base:$('uBase').value,tan:n($('uTan').value),obj:n($('uObj').value),articul:$('uArt').value,t1:$('uT1').value.trim(),dolly:$('uArt').value==='Full'?$('uDolly').value.trim():'',t2:$('uArt').value==='Full'?$('uT2').value.trim():'',ts:ahora()};
   var ix=$('uIdx').value;
   if(ix!==''){S.unidades[+ix]=o}else{
     if(S.unidades.some(function(u){return u.eco===o.eco})){toast('Ya existe una unidad con ese económico.',1);return false}
@@ -705,8 +735,9 @@ function guardarUnidad(e){
   delete S.del[o.eco];
   limpiarU();persistir();pintar();toast('Unidad guardada');return false;
 }
-function editU(eco){var i=S.unidades.findIndex(function(x){return x.eco===eco});if(i<0)return;var u=S.unidades[i];tab('unidades');$('uIdx').value=i;$('uEco').value=u.eco;$('uPla').value=u.pla;$('uOp').value=u.op;$('uBase').value=u.base;$('uTan').value=u.tan;$('uObj').value=u.obj}
-function limpiarU(){$('uIdx').value='';['uEco','uPla','uOp'].forEach(function(i){$(i).value=''});$('uBase').value='PUE';$('uTan').value='400';$('uObj').value='2.60'}
+function editU(eco){var i=S.unidades.findIndex(function(x){return x.eco===eco});if(i<0)return;var u=S.unidades[i];tab('unidades');$('uIdx').value=i;$('uEco').value=u.eco;$('uPla').value=u.pla;$('uOp').value=u.op;$('uBase').value=u.base;$('uTan').value=u.tan;$('uObj').value=u.obj;$('uArt').value=u.articul||'Sencillo';$('uT1').value=u.t1||'';$('uDolly').value=u.dolly||'';$('uT2').value=u.t2||'';uArtToggle()}
+function limpiarU(){$('uIdx').value='';['uEco','uPla','uOp','uT1','uDolly','uT2'].forEach(function(i){$(i).value=''});$('uBase').value='PUE';$('uTan').value='400';$('uObj').value='2.60';$('uArt').value='Sencillo';uArtToggle()}
+function uArtToggle(){var full=$('uArt').value==='Full';$('uDollyBox').style.display=full?'':'none';$('uT2Box').style.display=full?'':'none'}
 
 /* ================= AJUSTES ================= */
 function renderCfg(){var c=S.cfg;$('gPre').value=c.precio;$('gIva').value=c.iva;$('gRet').value=c.ret;$('gTa').value=c.ta;$('gTr').value=c.tr;
@@ -718,12 +749,12 @@ function guardarCfg(e){e.preventDefault();S.cfg={precio:n($('gPre').value),iva:n
 function descarga(nombre,contenido,tipo){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([contenido],{type:tipo}));a.download=nombre;a.click()}
 function csv(t){
   var filas,cab;
-  if(t==='viajes'){cab=['Fecha','Unidad','Operador','Base','Ruta','Toneladas','PrecioTon','Subtotal','IVA','Retencion','TotalFactura','KmInicial','KmFinal','KmRecorridos','Litros','CostoDiesel','Casetas','ComisionOperador','Utilidad'];
-    filas=fV().map(function(v){return [v.fecha,v.eco,v.op,v.base,v.ruta,v.ton,v.pton,subViaje(v).toFixed(2),ivaViaje(v).toFixed(2),retViaje(v).toFixed(2),totViaje(v).toFixed(2),v.kmi,v.kmf,kmViaje(v),v.lts,v.die,v.cas,v.com,utilViaje(v).toFixed(2)]})}
-  else if(t==='rutas'){cab=['Ruta','Base','PrecioTonelada','ComisionOperador','CasetasRef','KmRef'];
-    filas=S.rutas.map(function(r){return [r.nom,r.base,r.pton,r.com,r.cas,r.km]})}
-  else if(t==='mants'){cab=['Fecha','Unidad','Taller','Proveedor','Descripcion','Importe'];
-    filas=S.mants.filter(function(m){return enMes(m.fecha)}).map(function(m){return [m.fecha,m.eco,m.taller,m.prov,m.des,m.imp]})}
+  if(t==='viajes'){cab=['Fecha','Unidad','Operador','Base','Ruta','Producto','Toneladas','PrecioTon','Subtotal','IVA','Retencion','TotalFactura','KmInicial','KmFinal','KmRecorridos','Litros','CostoDiesel','Casetas','ComisionOperador','Enlonada','Lavada','CargaTelefonica','Utilidad','Vale','CartaPorte','Factura'];
+    filas=fV().map(function(v){return [v.fecha,v.eco,v.op,v.base,v.ruta,v.prod,v.ton,v.pton,subViaje(v).toFixed(2),ivaViaje(v).toFixed(2),retViaje(v).toFixed(2),totViaje(v).toFixed(2),v.kmi,v.kmf,kmViaje(v),v.lts,v.die,v.cas,v.com,n(v.enl),n(v.lav),n(v.tel),utilViaje(v).toFixed(2),v.vale,v.cp,v.fac]})}
+  else if(t==='rutas'){cab=['Ruta','Base','PrecioTonelada','ComisionOperador','CasetasRef','KmRef','Enlonada','Lavada','CargaTelefonica'];
+    filas=S.rutas.map(function(r){return [r.nom,r.base,r.pton,r.com,r.cas,r.km,n(r.enl),n(r.lav),n(r.tel)]})}
+  else if(t==='mants'){cab=['Fecha','Unidad','EquipoReparado','Categoria','Taller','Proveedor','Descripcion','Importe'];
+    filas=S.mants.filter(function(m){return enMes(m.fecha)}).map(function(m){return [m.fecha,m.eco,m.equipo||m.eco,m.cat,m.taller,m.prov,m.des,m.imp]})}
   else{cab=['Fecha','Unidad','Folio','Estacion','Litros','PrecioL','Importe','Odometro'];
     filas=S.cargas.filter(function(c){return enMes(c.fecha)}).map(function(c){return [c.fecha,c.eco,c.fol,c.est,c.lts,c.pre,c.imp,c.odo]})}
   var txt='\ufeff'+cab.join(',')+'\n'+filas.map(function(f){return f.map(function(x){return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
