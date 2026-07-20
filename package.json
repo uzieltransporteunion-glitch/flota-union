@@ -1,0 +1,9 @@
+{
+  "name": "flota-union-kardex",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kardex + Combustible + Mantenimiento - Flota de Viaje Union 2026",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "express": "^4.19.2" }
+}

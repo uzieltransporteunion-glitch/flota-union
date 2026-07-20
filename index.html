@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kardex + Combustible + Mantenimiento · Flota de Viaje Unión 2026</title>
+<style>
+:root{
+  --azul:#1d4ed8;      /* km */
+  --rojo:#c62828;      /* diesel / gastos */
+  --morado:#6d28d9;    /* rendimiento */
+  --ambar:#b45309;     /* totales / utilidad */
+  --verde:#15803d;
+  --tinta:#1c2430;
+  --gris:#5b6673;
+  --linea:#d7dde4;
+  --papel:#f2f4f7;
+  --blanco:#ffffff;
+  --oscuro:#141d28;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--papel);color:var(--tinta);font-size:14px}
+header{background:var(--oscuro);color:#fff;padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+header h1{font-size:16px;letter-spacing:.06em;text-transform:uppercase;font-weight:800}
+header small{display:block;color:#9fb0c2;font-weight:400;letter-spacing:.02em;text-transform:none;font-size:11px}
+#modoDato{font-size:11px;padding:4px 10px;border-radius:999px;background:#2a3646;color:#c8d4e0;border:1px solid #3c4b5e}
+#modoDato.ok{background:#123c22;color:#7ee2a0;border-color:#1d6a3a}
+#modoDato.err{background:#43181a;color:#f3a1a1;border-color:#7a2b2b}
+nav{display:flex;gap:4px;background:var(--oscuro);padding:0 12px 10px;flex-wrap:wrap}
+nav button{background:#22303f;color:#c8d4e0;border:0;padding:8px 12px;border-radius:8px 8px 0 0;cursor:pointer;font-weight:600;font-size:13px}
+nav button.act{background:var(--papel);color:var(--tinta)}
+main{max-width:1240px;margin:0 auto;padding:14px 12px 70px}
+section.tab{display:none}
+section.tab.act{display:block}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px;font-weight:800}
+.aviso{background:#fff7e6;border:1px solid #f0d9a8;color:#7a5a12;padding:8px 12px;border-radius:8px;margin:8px 0;font-size:13px}
+.aviso.err{background:#fdecea;border-color:#f2b8b5;color:#8a1c17}
+.aviso.ok{background:#e5f4ea;border-color:#bfe4cd;color:var(--verde)}
+.aviso.info{background:#e9f0fb;border-color:#c4d6f2;color:#1e478f}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:10px 0}
+.kpi{background:var(--blanco);border:1px solid var(--linea);border-radius:10px;padding:10px 12px;border-top:4px solid var(--gris)}
+.kpi b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:10.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.05em}
+.kpi.km{border-top-color:var(--azul)} .kpi.km b{color:var(--azul)}
+.kpi.diesel{border-top-color:var(--rojo)} .kpi.diesel b{color:var(--rojo)}
+.kpi.rend{border-top-color:var(--morado)} .kpi.rend b{color:var(--morado)}
+.kpi.tot{border-top-color:var(--ambar)} .kpi.tot b{color:var(--ambar)}
+.kpi.neg b{color:var(--rojo)!important}
+/* Semáforo */
+.semaforo{background:var(--blanco);border:1px solid var(--linea);border-radius:10px;overflow:hidden;margin:10px 0}
+.sfila{display:grid;grid-template-columns:8px 95px 1fr 140px 96px;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--linea)}
+.sfila:last-child{border-bottom:0}
+.sfila .rail{width:8px;height:100%;border-radius:4px;min-height:34px}
+.v .rail{background:var(--verde)} .a .rail{background:#d99a06} .r .rail{background:var(--rojo)} .n .rail{background:#b6bfc9}
+.sfila .eco{font-weight:800;font-size:15px}
+.sfila .eco small{display:block;color:var(--gris);font-weight:400;font-size:11px}
+.barra{background:#e8ecf1;border-radius:6px;height:16px;position:relative;overflow:hidden}
+.barra i{position:absolute;left:0;top:0;bottom:0;background:var(--morado);opacity:.85;border-radius:6px}
+.barra u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--tinta)}
+.sfila .dato{font-variant-numeric:tabular-nums;font-weight:700;color:var(--morado);text-align:right}
+.sfila .dato small{display:block;color:var(--gris);font-weight:400}
+.etq{font-size:11px;font-weight:800;text-align:center;padding:4px 6px;border-radius:6px}
+.v .etq{background:#e5f4ea;color:var(--verde)} .a .etq{background:#fdf3d7;color:#8a6206} .r .etq{background:#fdecea;color:var(--rojo)} .n .etq{background:#eef1f4;color:var(--gris)}
+/* Tablas */
+.tw{overflow-x:auto;background:var(--blanco);border:1px solid var(--linea);border-radius:10px;margin:8px 0}
+table{border-collapse:collapse;width:100%;min-width:760px}
+table.ancha{min-width:1450px}
+th{background:#eef1f5;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--gris);padding:8px 7px}
+td{padding:7px 7px;border-top:1px solid var(--linea);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:13px}
+td.num{text-align:right}
+td.km{color:var(--azul)} td.diesel{color:var(--rojo)} td.rend{color:var(--morado);font-weight:700} td.tot{color:var(--ambar);font-weight:700}
+td.neg{color:var(--rojo)!important}
+.badge{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:#e8ecf1;color:var(--gris)}
+.badge.PUE{background:#e3ecfb;color:var(--azul)}
+.badge.HGO{background:#efe6fb;color:var(--morado)}
+.badge.AGS{background:#fdf3d7;color:#8a6206}
+.badge.EXT{background:#fdecea;color:var(--rojo)}
+.badge.PRO{background:#e5f4ea;color:var(--verde)}
+.acc{color:var(--azul);cursor:pointer;font-weight:700;margin-right:8px;font-size:12.5px}
+.acc.del{color:var(--rojo)}
+.acc.conf{background:var(--rojo);color:#fff;padding:2px 7px;border-radius:6px}
+tfoot td{font-weight:800;background:#fbf6ec;border-top:2px solid var(--ambar)}
+/* Formularios */
+form.f{background:var(--blanco);border:1px solid var(--linea);border-radius:10px;padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px;margin:10px 0}
+form.f label{font-size:10.5px;color:var(--gris);text-transform:uppercase;letter-spacing:.04em;display:block}
+form.f input,form.f select{width:100%;padding:7px 8px;border:1px solid var(--linea);border-radius:7px;font-size:14px;background:#fff}
+form.f .full{grid-column:1/-1}
+.preview{background:#fbf6ec;border:1px solid #ecd9ae;border-radius:8px;padding:8px 12px;font-size:13px;display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.preview b{color:var(--ambar)}
+.preview .u b{color:var(--verde)}
+button.b{background:var(--tinta);color:#fff;border:0;border-radius:8px;padding:9px 14px;font-weight:700;cursor:pointer;font-size:13px}
+button.b.sec{background:#e8ecf1;color:var(--tinta)}
+button.b.rojo{background:var(--rojo)}
+button.b.verde{background:var(--verde)}
+.filtros{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.filtros input,.filtros select{padding:6px 8px;border:1px solid var(--linea);border-radius:7px}
+.instr{background:var(--blanco);border:1px solid var(--linea);border-radius:10px;padding:14px;line-height:1.55;font-size:13px}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--tinta);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;display:none;z-index:99;max-width:92%;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#toast.err{background:var(--rojo)}
+@media print{header,nav,form.f,.filtros,button,.noimp,#toast{display:none!important}body{background:#fff}.tw{border:0}}
+@media (max-width:640px){.sfila{grid-template-columns:8px 70px 1fr;grid-auto-rows:auto}.sfila .dato,.sfila .etq{grid-column:3;text-align:left}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Kardex · Combustible ⛽ · Mantenimiento 🔧<small>Flota de Viaje Unión 2026 · Cooperativa La Unión S.C.L.</small></h1></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="modoDato">Cargando…</span>
+    <button class="b sec" onclick="actualizar()">🔄 Actualizar</button>
+  </div>
+</header>
+<nav>
+  <button class="act" data-t="dash" onclick="tab('dash')">Tablero</button>
+  <button data-t="kardex" onclick="tab('kardex')">Kardex</button>
+  <button data-t="rutas" onclick="tab('rutas')">Rutas (tabulador)</button>
+  <button data-t="cargas" onclick="tab('cargas')">Cargas diesel</button>
+  <button data-t="mant" onclick="tab('mant')">Mantenimiento</button>
+  <button data-t="unidades" onclick="tab('unidades')">Unidades</button>
+  <button data-t="ajustes" onclick="tab('ajustes')">Ajustes</button>
+</nav>
+<main>
+<div id="avisoMem" class="aviso err" style="display:none">⚠ Este navegador no permite guardado local. La app funciona directo contra el servidor; evita cerrar la pestaña si estás sin conexión.</div>
+
+<div class="filtros">
+  <label>Mes: <input type="month" id="fMes" onchange="pintar()"></label>
+  <label>Base: <select id="fBase" onchange="pintar()"><option value="">Todas</option><option value="PUE">Base Puebla</option><option value="HGO">Base Hidalgo</option><option value="AGS">Base Ags</option></select></label>
+  <button class="b sec" onclick="document.getElementById('fMes').value='';document.getElementById('fBase').value='';pintar()">Ver todo</button>
+  <button class="b sec noimp" onclick="window.print()">Imprimir</button>
+</div>
+
+<!-- ============ TABLERO ============ -->
+<section class="tab act" id="t-dash">
+  <div class="kpis" id="kpis"></div>
+  <h2 style="color:var(--ambar)">Estado de resultados por unidad (utilidad de viajes − mantenimiento)</h2>
+  <div class="tw"><table id="tblER" style="min-width:1150px"></table></div>
+  <h2 style="color:var(--morado)">Semáforo de rendimiento por unidad (tanque a tanque)</h2>
+  <div class="semaforo" id="semaforo"></div>
+  <h2 style="color:var(--rojo)">Alertas de ordeña y captura</h2>
+  <div id="alertas"></div>
+</section>
+
+<!-- ============ KARDEX ============ -->
+<section class="tab" id="t-kardex">
+  <h2>Registrar viaje</h2>
+  <form class="f" onsubmit="return guardarViaje(event)">
+    <input type="hidden" id="vId">
+    <div><label>Fecha</label><input type="date" id="vFecha" required></div>
+    <div><label>Unidad</label><select id="vEco" required onchange="opAuto()"></select></div>
+    <div><label>Operador</label><input id="vOp"></div>
+    <div style="grid-column:span 2"><label>Ruta (del tabulador)</label><select id="vRuta" required onchange="rutaAuto()"></select></div>
+    <div><label>Base</label><select id="vBase"><option value="PUE">Puebla</option><option value="HGO">Hidalgo</option><option value="AGS">Ags</option></select></div>
+    <div><label>Toneladas</label><input type="number" id="vTon" min="0" step="0.01" required oninput="previewV()"></div>
+    <div><label>Precio por tonelada $</label><input type="number" id="vPton" min="0" step="0.01" required oninput="previewV()"></div>
+    <div><label>Km inicial</label><input type="number" id="vKmI" min="0" step="1" required></div>
+    <div><label>Km final</label><input type="number" id="vKmF" min="0" step="1" required></div>
+    <div><label>Litros diesel</label><input type="number" id="vLts" min="0" step="0.01" oninput="dieselAuto();previewV()"></div>
+    <div><label>Costo diesel $</label><input type="number" id="vDie" min="0" step="0.01" oninput="previewV()"></div>
+    <div><label>Casetas $</label><input type="number" id="vCas" min="0" step="0.01" value="0" oninput="previewV()"></div>
+    <div><label>Comisión operador $</label><input type="number" id="vCom" min="0" step="0.01" value="0" oninput="previewV()"></div>
+    <div><label>¿Cliente retiene 4%?</label><select id="vRet" onchange="previewV()"><option value="1">Sí (persona moral)</option><option value="0">No (persona física)</option></select></div>
+    <div class="full preview" id="pv"></div>
+    <div class="full" style="display:flex;gap:8px"><button class="b" type="submit">Guardar viaje</button><button class="b sec" type="button" onclick="limpiarV()">Limpiar</button></div>
+  </form>
+  <div class="filtros"><button class="b sec" onclick="csv('viajes')">Exportar CSV (Excel)</button></div>
+  <div class="tw"><table id="tblViajes" class="ancha"></table></div>
+</section>
+
+<!-- ============ RUTAS ============ -->
+<section class="tab" id="t-rutas">
+  <h2>Tabulador de rutas — tu base de datos</h2>
+  <p class="aviso">Da de alta cada ruta una sola vez. Al elegirla en el Kardex se llenan solos: base, precio por tonelada, comisión del operador y casetas de referencia (editable por viaje).</p>
+  <form class="f" onsubmit="return guardarRuta(event)">
+    <input type="hidden" id="rId">
+    <div style="grid-column:span 2"><label>Nombre de la ruta</label><input id="rNom" required placeholder="Puebla – CDMX"></div>
+    <div><label>Base</label><select id="rBase"><option value="PUE">Puebla</option><option value="HGO">Hidalgo</option><option value="AGS">Ags</option></select></div>
+    <div><label>Precio por tonelada $</label><input type="number" id="rPton" min="0" step="0.01" required></div>
+    <div><label>Comisión operador $ (tabulada)</label><input type="number" id="rCom" min="0" step="0.01" required></div>
+    <div><label>Casetas $ (referencia)</label><input type="number" id="rCas" min="0" step="0.01" value="0"></div>
+    <div><label>Km ruta (referencia)</label><input type="number" id="rKm" min="0" step="1" value="0"></div>
+    <div class="full" style="display:flex;gap:8px"><button class="b" type="submit">Guardar ruta</button><button class="b sec" type="button" onclick="limpiarR()">Limpiar</button></div>
+  </form>
+  <div class="filtros"><button class="b sec" onclick="csv('rutas')">Exportar CSV (Excel)</button></div>
+  <div class="tw"><table id="tblRutas"></table></div>
+</section>
+
+<!-- ============ CARGAS ============ -->
+<section class="tab" id="t-cargas">
+  <h2>Registrar carga de diesel (vale)</h2>
+  <form class="f" onsubmit="return guardarCarga(event)">
+    <input type="hidden" id="cId">
+    <div><label>Fecha</label><input type="date" id="cFecha" required></div>
+    <div><label>Unidad</label><select id="cEco" required></select></div>
+    <div><label>Folio vale</label><input id="cFolio" required></div>
+    <div><label>Estación</label><input id="cEst"></div>
+    <div><label>Litros</label><input type="number" id="cLts" min="0" step="0.01" required oninput="impAuto()"></div>
+    <div><label>Precio $/L</label><input type="number" id="cPre" min="0" step="0.01" required oninput="impAuto()"></div>
+    <div><label>Importe $</label><input type="number" id="cImp" min="0" step="0.01"></div>
+    <div><label>Odómetro (km)</label><input type="number" id="cOdo" min="0" step="1" required></div>
+    <div class="full" style="display:flex;gap:8px"><button class="b" type="submit">Guardar carga</button><button class="b sec" type="button" onclick="limpiarC()">Limpiar</button></div>
+  </form>
+  <div class="filtros"><button class="b sec" onclick="csv('cargas')">Exportar CSV (Excel)</button></div>
+  <div class="tw"><table id="tblCargas"></table></div>
+</section>
+
+<!-- ============ MANTENIMIENTO ============ -->
+<section class="tab" id="t-mant">
+  <h2>Registrar gasto de mantenimiento</h2>
+  <form class="f" onsubmit="return guardarMant(event)">
+    <input type="hidden" id="mId">
+    <div><label>Fecha</label><input type="date" id="mFecha" required></div>
+    <div><label>Unidad</label><select id="mEco" required></select></div>
+    <div><label>Taller</label><select id="mTaller"><option value="Propio">Taller propio</option><option value="Externo">Taller externo</option></select></div>
+    <div><label>Taller externo (nombre)</label><input id="mProv" placeholder="Solo si es externo"></div>
+    <div style="grid-column:span 2"><label>Descripción</label><input id="mDes" required placeholder="Balatas eje trasero"></div>
+    <div><label>Importe total $</label><input type="number" id="mImp" min="0" step="0.01" required></div>
+    <div class="full" style="display:flex;gap:8px"><button class="b" type="submit">Guardar gasto</button><button class="b sec" type="button" onclick="limpiarM()">Limpiar</button></div>
+  </form>
+  <div class="filtros"><button class="b sec" onclick="csv('mants')">Exportar CSV (Excel)</button></div>
+  <div class="kpis" id="kpiMant"></div>
+  <div class="tw"><table id="tblMant"></table></div>
+</section>
+
+<!-- ============ UNIDADES ============ -->
+<section class="tab" id="t-unidades">
+  <h2>Alta / edición de unidad</h2>
+  <form class="f" onsubmit="return guardarUnidad(event)">
+    <input type="hidden" id="uIdx">
+    <div><label>Económico</label><input id="uEco" required placeholder="T-01"></div>
+    <div><label>Placas</label><input id="uPla"></div>
+    <div><label>Operador</label><input id="uOp"></div>
+    <div><label>Base</label><select id="uBase"><option value="PUE">Puebla</option><option value="HGO">Hidalgo</option><option value="AGS">Ags</option></select></div>
+    <div><label>Capacidad tanque (L)</label><input type="number" id="uTan" min="0" step="1" value="400"></div>
+    <div><label>Objetivo rendimiento (km/L)</label><input type="number" id="uObj" min="0" step="0.01" value="2.60"></div>
+    <div class="full" style="display:flex;gap:8px"><button class="b" type="submit">Guardar unidad</button><button class="b sec" type="button" onclick="limpiarU()">Limpiar</button></div>
+  </form>
+  <div class="tw"><table id="tblUnidades"></table></div>
+</section>
+
+<!-- ============ AJUSTES ============ -->
+<section class="tab" id="t-ajustes">
+  <h2>Parámetros</h2>
+  <form class="f" onsubmit="return guardarCfg(event)">
+    <div><label>Precio diesel $/L</label><input type="number" id="gPre" step="0.01" min="0"></div>
+    <div><label>IVA %</label><input type="number" id="gIva" step="0.5" min="0"></div>
+    <div><label>Retención %</label><input type="number" id="gRet" step="0.5" min="0"></div>
+    <div><label>Tolerancia amarillo %</label><input type="number" id="gTa" step="0.5" min="0"></div>
+    <div><label>Tolerancia rojo %</label><input type="number" id="gTr" step="0.5" min="0"></div>
+    <div class="full"><button class="b" type="submit">Guardar parámetros</button></div>
+  </form>
+  <h2>Datos del equipo</h2>
+  <div class="instr">
+    <p id="txtModo"></p>
+    <p style="margin-top:6px">El botón <b>🔄 Actualizar</b> (arriba) trae lo que capturaron los demás; además se actualiza solo cada minuto y al guardar cualquier registro. Si dos personas editan el mismo renglón al mismo tiempo, se conserva el cambio más reciente.</p>
+  </div>
+  <h2>Respaldo</h2>
+  <div class="filtros">
+    <button class="b sec" onclick="expJson()">Descargar respaldo JSON</button>
+    <label class="b sec" style="display:inline-block">Restaurar respaldo <input type="file" accept=".json" style="display:none" onchange="impJson(this)"></label>
+    <button class="b rojo" id="btnSeed" onclick="del('seed','x')">Borrar datos de ejemplo</button>
+  </div>
+  <p class="aviso">Descarga el respaldo JSON cada viernes y guárdalo en Drive. Los CSV de cada pestaña abren directo en Excel.</p>
+</section>
+</main>
+<div id="toast"></div>
+<script>
+/* ================= CAPA DE DATOS: EQUIPO (compartido) / INDIVIDUAL / MEMORIA ================= */
+/* ================= CAPA DE DATOS: SERVIDOR DEL EQUIPO (API) ================= */
+var LK='fu26_kardex_srv', CLK='fu26_clave';
+function lsOk(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return true}catch(e){return false}}
+var S=null,MEM=null,MEMCLAVE='',guardando=false,pendiente=false,servidorOK=false;
+function ahora(){return Date.now()}
+function hora(){return new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}
+function setModo(t,err){var e=document.getElementById('modoDato');e.textContent=t;e.className=err?'err':'ok'}
+function clave(){if(MEMCLAVE)return MEMCLAVE;try{return localStorage.getItem(CLK)||''}catch(e){return ''}}
+function setClave(v){MEMCLAVE=v;try{localStorage.setItem(CLK,v)}catch(e){}}
+async function api(cuerpo){
+  var h={'Content-Type':'application/json'};if(clave())h['x-clave']=clave();
+  var r=await fetch('api/estado',{method:cuerpo?'POST':'GET',headers:h,body:cuerpo?JSON.stringify(cuerpo):undefined});
+  if(r.status===401){
+    var c=window.prompt('Clave del equipo (te la comparte el coordinador):')||'';
+    if(c){setClave(c);return api(cuerpo)}
+    throw new Error('sin clave');
+  }
+  if(!r.ok)throw new Error('http '+r.status);
+  return r.json();
+}
+function guardarLocal(){try{if(lsOk())localStorage.setItem(LK,JSON.stringify(S))}catch(e){}}
+function normalizar(d){
+  if(!d)return d;
+  d.rutas=d.rutas||[];d.mants=d.mants||[];d.del=d.del||{};
+  d.cfg=d.cfg||{};if(d.cfg.precio==null)d.cfg.precio=26.50;if(d.cfg.iva==null)d.cfg.iva=16;if(d.cfg.ret==null)d.cfg.ret=4;if(d.cfg.ta==null)d.cfg.ta=6;if(d.cfg.tr==null)d.cfg.tr=12;d.cfg.ts=d.cfg.ts||1;
+  ['unidades','rutas','viajes','cargas','mants'].forEach(function(c){(d[c]||[]).forEach(function(x){if(!x.ts)x.ts=1;delete x._s})});
+  d.mants.forEach(function(m){if(!m.taller)m.taller=(m.tipo==='Mano de obra'||m.tipo==='Refacciones')?'Propio':(m.taller||'Propio');if(m.prov==null)m.prov='';delete m.tipo});
+  return d;
+}
+function mergeCol(a,b,key){
+  var m={};
+  (a||[]).forEach(function(x){m[x[key]]=x});
+  (b||[]).forEach(function(x){var e=m[x[key]];if(!e||(x.ts||0)>(e.ts||0))m[x[key]]=x});
+  var out=[];for(var k in m)out.push(m[k]);return out;
+}
+function mergeS(rem){
+  if(!rem)return;
+  rem=normalizar(rem);
+  ['viajes','cargas','rutas','mants'].forEach(function(c){S[c]=mergeCol(S[c],rem[c],'id')});
+  S.unidades=mergeCol(S.unidades,rem.unidades,'eco');
+  var d={},k;for(k in S.del)d[k]=S.del[k];for(k in rem.del)if(!d[k]||rem.del[k]>d[k])d[k]=rem.del[k];S.del=d;
+  function apl(col,key){return col.filter(function(x){var t=S.del[x[key]];return !(t&&t>=(x.ts||0))})}
+  ['viajes','cargas','rutas','mants'].forEach(function(c){S[c]=apl(S[c],'id')});
+  S.unidades=apl(S.unidades,'eco');
+  if(rem.cfg&&(rem.cfg.ts||0)>(S.cfg.ts||0))S.cfg=rem.cfg;
+  if(rem.seeded===false)S.seeded=false;
+}
+async function persistir(){
+  guardarLocal();
+  if(guardando){pendiente=true;return}
+  guardando=true;
+  try{
+    var fus=await api(S);
+    S=normalizar(fus);servidorOK=true;guardarLocal();
+    setModo('🌐 Equipo · guardado '+hora());
+  }catch(e){servidorOK=false;setModo('🌐 Sin conexión · guardado local, se envía al reconectar',1)}
+  guardando=false;
+  if(pendiente){pendiente=false;persistir();return}
+  pintar();
+}
+async function actualizar(sil){
+  try{
+    var fus=await api(S);
+    S=normalizar(fus);servidorOK=true;guardarLocal();
+    setModo('🌐 Equipo · al día '+hora());
+    pintar();
+    if(!sil)toast('Datos del equipo actualizados');
+  }catch(e){servidorOK=false;setModo('🌐 Sin conexión',1);if(!sil)toast('Sin conexión con el servidor. Tus capturas quedan locales y se enviarán al reconectar.',1)}
+}
+
+/* ================= DATOS SEMILLA ================= */
+function seed(){
+ return normalizar({
+  seeded:true,del:{},
+  cfg:{precio:26.50,iva:16,ret:4,ta:6,tr:12,ts:1},
+  unidades:[
+   {eco:'T-01',pla:'AA-1234-B',op:'Juan Pérez',base:'HGO',tan:400,obj:2.60,ts:1},
+   {eco:'T-02',pla:'BB-5678-C',op:'Pedro Sánchez',base:'PUE',tan:400,obj:2.60,ts:1},
+   {eco:'T-03',pla:'CC-9012-D',op:'Luis Hernández',base:'AGS',tan:600,obj:2.20,ts:1}
+  ],
+  rutas:[
+   {id:'r1',nom:'Pachuca – Puebla',base:'HGO',pton:480,com:900,cas:1850,km:410,ej:1,ts:1},
+   {id:'r2',nom:'Pachuca – Veracruz',base:'HGO',pton:620,com:1500,cas:2900,km:650,ej:1,ts:1},
+   {id:'r3',nom:'Puebla – CDMX',base:'PUE',pton:410,com:800,cas:1600,km:290,ej:1,ts:1},
+   {id:'r4',nom:'Puebla – Querétaro',base:'PUE',pton:450,com:1000,cas:2100,km:350,ej:1,ts:1},
+   {id:'r5',nom:'Aguascalientes – Guadalajara',base:'AGS',pton:400,com:700,cas:1400,km:260,ej:1,ts:1}
+  ],
+  viajes:[
+   {id:'v1',fecha:'2026-07-06',eco:'T-01',op:'Juan Pérez',ruta:'Pachuca – Puebla',base:'HGO',ton:32,pton:480,kmi:125000,kmf:125410,lts:158,die:4187.00,cas:1850,com:900,ret4:1,ej:1,ts:1},
+   {id:'v2',fecha:'2026-07-13',eco:'T-01',op:'Juan Pérez',ruta:'Pachuca – Veracruz',base:'HGO',ton:34,pton:620,kmi:125410,kmf:126060,lts:252,die:6678.00,cas:2900,com:1500,ret4:1,ej:1,ts:1},
+   {id:'v3',fecha:'2026-07-07',eco:'T-02',op:'Pedro Sánchez',ruta:'Puebla – CDMX',base:'PUE',ton:30,pton:410,kmi:98000,kmf:98290,lts:146,die:3869.00,cas:1600,com:800,ret4:1,ej:1,ts:1},
+   {id:'v4',fecha:'2026-07-14',eco:'T-02',op:'Pedro Sánchez',ruta:'Puebla – Querétaro',base:'PUE',ton:31,pton:450,kmi:98290,kmf:98640,lts:172,die:4558.00,cas:2100,com:1000,ret4:1,ej:1,ts:1},
+   {id:'v5',fecha:'2026-07-09',eco:'T-03',op:'Luis Hernández',ruta:'Aguascalientes – Guadalajara',base:'AGS',ton:28,pton:400,kmi:210500,kmf:210760,lts:121,die:3206.50,cas:1400,com:700,ret4:1,ej:1,ts:1}
+  ],
+  cargas:[
+   {id:'c1',fecha:'2026-07-05',eco:'T-01',fol:'V-1001',est:'Pemex Colosio',lts:150,pre:26.50,imp:3975,odo:124995,ej:1,ts:1},
+   {id:'c2',fecha:'2026-07-12',eco:'T-01',fol:'V-1009',est:'Pemex Colosio',lts:158,pre:26.50,imp:4187,odo:125405,ej:1,ts:1},
+   {id:'c3',fecha:'2026-07-18',eco:'T-01',fol:'V-1017',est:'G500 Puebla',lts:251,pre:26.60,imp:6677,odo:126055,ej:1,ts:1},
+   {id:'c4',fecha:'2026-07-06',eco:'T-02',fol:'V-1003',est:'Pemex CAPU',lts:160,pre:26.50,imp:4240,odo:97995,ej:1,ts:1},
+   {id:'c5',fecha:'2026-07-13',eco:'T-02',fol:'V-1010',est:'Pemex CAPU',lts:146,pre:26.50,imp:3869,odo:98285,ej:1,ts:1},
+   {id:'c6',fecha:'2026-07-18',eco:'T-02',fol:'V-1018',est:'G500 Qro',lts:172,pre:26.60,imp:4575,odo:98635,ej:1,ts:1},
+   {id:'c7',fecha:'2026-07-08',eco:'T-03',fol:'V-1006',est:'Pemex Ags Sur',lts:140,pre:26.40,imp:3696,odo:210495,ej:1,ts:1},
+   {id:'c8',fecha:'2026-07-17',eco:'T-03',fol:'V-1015',est:'Pemex GDL',lts:121,pre:26.40,imp:3194,odo:210755,ej:1,ts:1}
+  ],
+  mants:[
+   {id:'m1',fecha:'2026-07-10',eco:'T-01',taller:'Propio',prov:'',des:'Balatas eje trasero (refacción y mano de obra)',imp:5000,ej:1,ts:1},
+   {id:'m2',fecha:'2026-07-15',eco:'T-02',taller:'Propio',prov:'',des:'Servicio preventivo: filtros y aceite',imp:3500,ej:1,ts:1},
+   {id:'m3',fecha:'2026-07-16',eco:'T-03',taller:'Externo',prov:'Llantera El Trailero',des:'Llanta posición 4',imp:6500,ej:1,ts:1}
+  ]
+ });
+}
+
+/* ================= UTILERÍAS ================= */
+var fMX=new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'});
+function $(id){return document.getElementById(id)}
+function n(v){v=parseFloat(v);return isNaN(v)?0:v}
+function f2(v){return (Math.round(v*100)/100).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function f0(v){return Math.round(v).toLocaleString('es-MX')}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function mesSel(){return $('fMes').value||''}
+function baseSel(){return $('fBase').value||''}
+function enMes(f){var m=mesSel();return !m||(f&&f.indexOf(m)===0)}
+function pasaBase(b){var s=baseSel();return !s||b===s}
+function tab(t){
+  document.querySelectorAll('section.tab').forEach(function(s){s.classList.remove('act')});
+  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('act',b.dataset.t===t)});
+  $('t-'+t).classList.add('act');
+}
+function toast(m,err){var t=$('toast');t.textContent=m;t.className=err?'err':'';t.style.display='block';clearTimeout(t._h);t._h=setTimeout(function(){t.style.display='none'},3500)}
+function badge(b){return '<span class="badge '+esc(b)+'">'+esc(b)+'</span>'}
+
+/* ================= CÁLCULOS (regla firme: Σkm ÷ Σlitros; utilidad sobre subtotal sin IVA) ================= */
+function kmViaje(v){var k=n(v.kmf)-n(v.kmi);return k>0?k:0}
+function subViaje(v){return n(v.ton)*n(v.pton)}
+function ivaViaje(v){return subViaje(v)*n(S.cfg.iva)/100}
+function retViaje(v){return v.ret4?subViaje(v)*n(S.cfg.ret)/100:0}
+function totViaje(v){return subViaje(v)+ivaViaje(v)-retViaje(v)}
+function utilViaje(v){return subViaje(v)-n(v.die)-n(v.cas)-n(v.com)}
+function fV(){return S.viajes.filter(function(v){return enMes(v.fecha)&&pasaBase(v.base)})}
+function rendGlobal(vs){
+  var km=0,lt=0;
+  vs.forEach(function(v){if(n(v.lts)>0&&kmViaje(v)>0){km+=kmViaje(v);lt+=n(v.lts)}});
+  return lt>0?km/lt:null;
+}
+function rendUnidad(eco){
+  var cs=S.cargas.filter(function(c){return c.eco===eco&&enMes(c.fecha)&&n(c.odo)>0}).slice().sort(function(a,b){return n(a.odo)-n(b.odo)});
+  if(cs.length<2)return null;
+  var km=n(cs[cs.length-1].odo)-n(cs[0].odo),lt=0;
+  for(var i=1;i<cs.length;i++)lt+=n(cs[i].lts);
+  return (km>0&&lt>0)?km/lt:null;
+}
+function semClase(rend,obj){
+  if(rend==null||!(obj>0))return 'n';
+  var d=(obj-rend)/obj*100;
+  if(d<=n(S.cfg.ta))return 'v';
+  if(d<=n(S.cfg.tr))return 'a';
+  return 'r';
+}
+function mantUnidad(eco){
+  var prop=0,ext=0;
+  S.mants.forEach(function(m){if(m.eco===eco&&enMes(m.fecha)){if(m.taller==='Externo')ext+=n(m.imp);else prop+=n(m.imp)}});
+  return {prop:prop,ext:ext,tot:prop+ext};
+}
+function alertas(){
+  var A=[];
+  S.cargas.filter(function(c){return enMes(c.fecha)}).forEach(function(c){
+    var u=S.unidades.find(function(x){return x.eco===c.eco});
+    if(u&&n(u.tan)>0&&n(c.lts)>n(u.tan))A.push('🔴 Carga '+esc(c.fol)+' ('+esc(c.eco)+'): '+f2(c.lts)+' L supera la capacidad del tanque ('+f0(u.tan)+' L). Revisar vale vs ticket.');
+  });
+  S.unidades.forEach(function(u){
+    if(!pasaBase(u.base))return;
+    var cs=S.cargas.filter(function(c){return c.eco===u.eco&&enMes(c.fecha)}).slice().sort(function(a,b){return (a.fecha||'').localeCompare(b.fecha||'')});
+    for(var i=1;i<cs.length;i++){if(n(cs[i].odo)<n(cs[i-1].odo))A.push('🟡 '+esc(u.eco)+': el odómetro retrocede entre '+esc(cs[i-1].fol)+' y '+esc(cs[i].fol)+'. Verificar captura contra Samsara.');}
+    var r=rendUnidad(u.eco);
+    if(semClase(r,u.obj)==='r')A.push('🔴 '+esc(u.eco)+' ('+esc(u.op||'')+'): rendimiento '+f2(r)+' km/L vs objetivo '+f2(u.obj)+' — posible ordeña. Cruzar ECM Samsara vs tickets y aplicar P-LOG-COM-01.');
+    var mnt=mantUnidad(u.eco),vs=fV().filter(function(v){return v.eco===u.eco});
+    var uv=vs.reduce(function(a,v){return a+utilViaje(v)},0);
+    if(vs.length&&uv-mnt.tot<0)A.push('🟠 '+esc(u.eco)+': utilidad neta NEGATIVA en el periodo ('+fMX.format(uv-mnt.tot)+') por mantenimiento de '+fMX.format(mnt.tot)+'. Revisar en comité.');
+  });
+  fV().forEach(function(v){
+    if(kmViaje(v)>0&&n(v.lts)<=0)A.push('🟡 Viaje '+esc(v.eco)+' '+esc(v.ruta)+' ('+esc(v.fecha)+') sin litros capturados: no entra al rendimiento.');
+  });
+  return A;
+}
+
+/* ================= PINTAR ================= */
+function pintar(){renderDash();renderViajes();renderRutas();renderCargas();renderMant();renderUnidades();llenarSelects();renderCfg()}
+function renderDash(){
+  var vs=fV();
+  var cs=S.cargas.filter(function(c){return enMes(c.fecha)});
+  var km=vs.reduce(function(a,v){return a+kmViaje(v)},0);
+  var lts=cs.reduce(function(a,c){return a+n(c.lts)},0);
+  var costo=cs.reduce(function(a,c){return a+n(c.imp)},0);
+  var sub=vs.reduce(function(a,v){return a+subViaje(v)},0);
+  var com=vs.reduce(function(a,v){return a+n(v.com)},0);
+  var uv=vs.reduce(function(a,v){return a+utilViaje(v)},0);
+  var mt=0;S.unidades.forEach(function(u){if(pasaBase(u.base))mt+=mantUnidad(u.eco).tot});
+  var neta=uv-mt;
+  var rg=rendGlobal(vs);
+  $('kpis').innerHTML=
+   '<div class="kpi km"><span>Km recorridos</span><b>'+f0(km)+'</b></div>'+
+   '<div class="kpi diesel"><span>Litros cargados</span><b>'+f2(lts)+'</b></div>'+
+   '<div class="kpi diesel"><span>Costo diesel</span><b>'+fMX.format(costo)+'</b></div>'+
+   '<div class="kpi rend"><span>Rendimiento Σkm÷Σlts</span><b>'+(rg==null?'N/D':f2(rg)+' km/L')+'</b></div>'+
+   '<div class="kpi tot"><span>Subtotal facturado</span><b>'+fMX.format(sub)+'</b></div>'+
+   '<div class="kpi diesel"><span>Comisiones operador</span><b>'+fMX.format(com)+'</b></div>'+
+   '<div class="kpi diesel"><span>Mantenimiento</span><b>'+fMX.format(mt)+'</b></div>'+
+   '<div class="kpi tot'+(neta<0?' neg':'')+'"><span>Utilidad neta del periodo</span><b>'+fMX.format(neta)+'</b></div>';
+  var h='<thead><tr><th>Unidad</th><th>Base</th><th>Viajes</th><th>Ton</th><th>Subtotal</th><th>Diesel</th><th>Casetas</th><th>Comisión op.</th><th>Utilidad viajes</th><th>Mant. propio</th><th>Mant. externo</th><th>Mant. total</th><th>Utilidad neta</th></tr></thead><tbody>';
+  var T={vi:0,ton:0,sub:0,die:0,cas:0,com:0,uv:0,mp:0,me:0,mt:0,neta:0};
+  S.unidades.filter(function(u){return pasaBase(u.base)}).forEach(function(u){
+    var vs2=vs.filter(function(v){return v.eco===u.eco});
+    var ton=vs2.reduce(function(a,v){return a+n(v.ton)},0);
+    var sub2=vs2.reduce(function(a,v){return a+subViaje(v)},0);
+    var die=vs2.reduce(function(a,v){return a+n(v.die)},0);
+    var cas=vs2.reduce(function(a,v){return a+n(v.cas)},0);
+    var com2=vs2.reduce(function(a,v){return a+n(v.com)},0);
+    var uv2=vs2.reduce(function(a,v){return a+utilViaje(v)},0);
+    var m=mantUnidad(u.eco);
+    var neta2=uv2-m.tot;
+    T.vi+=vs2.length;T.ton+=ton;T.sub+=sub2;T.die+=die;T.cas+=cas;T.com+=com2;T.uv+=uv2;T.mp+=m.prop;T.me+=m.ext;T.mt+=m.tot;T.neta+=neta2;
+    h+='<tr><td><b>'+esc(u.eco)+'</b> <small style="color:var(--gris)">'+esc(u.op||'')+'</small></td><td>'+badge(u.base)+'</td><td class="num">'+vs2.length+'</td><td class="num">'+f2(ton)+'</td><td class="num tot">'+fMX.format(sub2)+'</td><td class="num diesel">'+fMX.format(die)+'</td><td class="num">'+fMX.format(cas)+'</td><td class="num diesel">'+fMX.format(com2)+'</td><td class="num tot">'+fMX.format(uv2)+'</td><td class="num diesel">'+fMX.format(m.prop)+'</td><td class="num diesel">'+fMX.format(m.ext)+'</td><td class="num diesel">'+fMX.format(m.tot)+'</td><td class="num '+(neta2<0?'neg':'tot')+'"><b>'+fMX.format(neta2)+'</b></td></tr>';
+  });
+  h+='</tbody><tfoot><tr><td colspan="2">TOTALES</td><td class="num">'+T.vi+'</td><td class="num">'+f2(T.ton)+'</td><td class="num">'+fMX.format(T.sub)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.die)+'</td><td class="num">'+fMX.format(T.cas)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.com)+'</td><td class="num" style="color:var(--ambar)">'+fMX.format(T.uv)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.mp)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.me)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.mt)+'</td><td class="num" style="color:'+(T.neta<0?'var(--rojo)':'var(--ambar)')+'">'+fMX.format(T.neta)+'</td></tr></tfoot>';
+  $('tblER').innerHTML=h;
+  var sh='';
+  S.unidades.filter(function(u){return pasaBase(u.base)}).forEach(function(u){
+    var r=rendUnidad(u.eco),c=semClase(r,u.obj);
+    var pct=(r!=null&&u.obj>0)?Math.min(120,r/u.obj*100):0;
+    var etq=c==='v'?'🟢 EN META':c==='a'?'🟡 VIGILAR':c==='r'?'🔴 POSIBLE ORDEÑA':'⚪ SIN DATOS';
+    sh+='<div class="sfila '+c+'"><div class="rail"></div>'+
+       '<div class="eco">'+esc(u.eco)+'<small>'+esc(u.op||'')+' · '+esc(u.base||'')+'</small></div>'+
+       '<div><div class="barra"><i style="width:'+(pct/1.2)+'%"></i><u style="left:'+(100/1.2)+'%"></u></div><small style="color:var(--gris)">objetivo '+f2(u.obj)+' km/L (línea negra)</small></div>'+
+       '<div class="dato">'+(r==null?'N/D':f2(r)+' km/L')+'<small>tanque a tanque</small></div>'+
+       '<div class="etq">'+etq+'</div></div>';
+  });
+  $('semaforo').innerHTML=sh||'<div class="sfila n"><div class="rail"></div><div style="grid-column:2/6;padding:6px 0">Sin unidades en este filtro</div></div>';
+  var A=alertas();
+  $('alertas').innerHTML=A.length?A.map(function(a){return '<div class="aviso'+(a.indexOf('🔴')===0?' err':'')+'">'+a+'</div>'}).join(''):'<div class="aviso ok">✅ Sin alertas en el periodo.</div>';
+}
+function accBtns(t,id){
+  var lbl=(pendDel===t+'|'+id)?'<span class="acc del conf" onclick="del(\''+t+'\',\''+id+'\')">¿Confirmar?</span>':'<span class="acc del" onclick="del(\''+t+'\',\''+id+'\')">Borrar</span>';
+  var ed={v:'editV',c:'editC',r:'editR',m:'editM',u:'editU'}[t];
+  return '<span class="acc" onclick="'+ed+'(\''+id+'\')">Editar</span>'+lbl;
+}
+function renderViajes(){
+  var vs=fV().slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'')});
+  var h='<thead><tr><th>Fecha</th><th>Unidad</th><th>Base</th><th>Ruta</th><th>Ton</th><th>$/Ton</th><th>Subtotal</th><th>IVA '+f0(S.cfg.iva)+'%</th><th>Ret. '+f0(S.cfg.ret)+'%</th><th>Total factura</th><th>Km</th><th>Lts</th><th>Diesel $</th><th>Casetas $</th><th>Comisión $</th><th>Utilidad $</th><th>Rend.</th><th></th></tr></thead><tbody>';
+  var T={ton:0,sub:0,iva:0,ret:0,tot:0,km:0,lts:0,die:0,cas:0,com:0,uti:0};
+  vs.forEach(function(v){
+    var km=kmViaje(v),sub=subViaje(v),iva=ivaViaje(v),ret=retViaje(v),tot=totViaje(v),uti=utilViaje(v);
+    var r=(n(v.lts)>0&&km>0)?km/n(v.lts):null;
+    T.ton+=n(v.ton);T.sub+=sub;T.iva+=iva;T.ret+=ret;T.tot+=tot;T.km+=km;T.lts+=n(v.lts);T.die+=n(v.die);T.cas+=n(v.cas);T.com+=n(v.com);T.uti+=uti;
+    h+='<tr><td>'+esc(v.fecha)+'</td><td><b>'+esc(v.eco)+'</b></td><td>'+badge(v.base)+'</td><td>'+esc(v.ruta)+'</td>'+
+       '<td class="num">'+f2(v.ton)+'</td><td class="num">'+f2(v.pton)+'</td><td class="num tot">'+fMX.format(sub)+'</td><td class="num">'+fMX.format(iva)+'</td><td class="num">'+(v.ret4?fMX.format(ret):'—')+'</td><td class="num tot">'+fMX.format(tot)+'</td>'+
+       '<td class="num km">'+f0(km)+'</td><td class="num diesel">'+f2(v.lts)+'</td><td class="num diesel">'+fMX.format(n(v.die))+'</td><td class="num">'+fMX.format(n(v.cas))+'</td><td class="num diesel">'+fMX.format(n(v.com))+'</td>'+
+       '<td class="num '+(uti<0?'neg':'tot')+'"><b>'+fMX.format(uti)+'</b></td><td class="num rend">'+(r==null?'—':f2(r))+'</td>'+
+       '<td>'+accBtns('v',v.id)+'</td></tr>';
+  });
+  var rg=rendGlobal(vs);
+  h+='</tbody><tfoot><tr><td colspan="4">TOTALES ('+vs.length+' viajes)</td><td class="num">'+f2(T.ton)+'</td><td></td><td class="num">'+fMX.format(T.sub)+'</td><td class="num">'+fMX.format(T.iva)+'</td><td class="num">'+fMX.format(T.ret)+'</td><td class="num">'+fMX.format(T.tot)+'</td><td class="num" style="color:var(--azul)">'+f0(T.km)+'</td><td class="num" style="color:var(--rojo)">'+f2(T.lts)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.die)+'</td><td class="num">'+fMX.format(T.cas)+'</td><td class="num" style="color:var(--rojo)">'+fMX.format(T.com)+'</td><td class="num" style="color:var(--ambar)">'+fMX.format(T.uti)+'</td><td class="num" style="color:var(--morado)">'+(rg==null?'—':f2(rg))+'</td><td></td></tr></tfoot>';
+  $('tblViajes').innerHTML=h;
+}
+function renderRutas(){
+  var h='<thead><tr><th>Ruta</th><th>Base</th><th>$/Ton</th><th>Comisión operador $</th><th>Casetas ref. $</th><th>Km ref.</th><th></th></tr></thead><tbody>';
+  S.rutas.slice().sort(function(a,b){return (a.base+a.nom).localeCompare(b.base+b.nom)}).forEach(function(r){
+    h+='<tr><td><b>'+esc(r.nom)+'</b></td><td>'+badge(r.base)+'</td><td class="num tot">'+fMX.format(n(r.pton))+'</td><td class="num diesel">'+fMX.format(n(r.com))+'</td><td class="num">'+fMX.format(n(r.cas))+'</td><td class="num km">'+f0(r.km)+'</td><td>'+accBtns('r',r.id)+'</td></tr>';
+  });
+  $('tblRutas').innerHTML=h+'</tbody>';
+}
+function renderCargas(){
+  var cs=S.cargas.filter(function(c){return enMes(c.fecha)}).slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'')});
+  var h='<thead><tr><th>Fecha</th><th>Unidad</th><th>Folio</th><th>Estación</th><th>Litros</th><th>$/L</th><th>Importe $</th><th>Odómetro</th><th></th></tr></thead><tbody>';
+  var tl=0,ti=0;
+  cs.forEach(function(c){
+    tl+=n(c.lts);ti+=n(c.imp);
+    var u=S.unidades.find(function(x){return x.eco===c.eco});
+    var sobre=u&&n(u.tan)>0&&n(c.lts)>n(u.tan);
+    h+='<tr><td>'+esc(c.fecha)+'</td><td><b>'+esc(c.eco)+'</b>'+(sobre?' ⚠':'')+'</td><td>'+esc(c.fol)+'</td><td>'+esc(c.est)+'</td><td class="num diesel">'+f2(c.lts)+'</td><td class="num">'+f2(c.pre)+'</td><td class="num diesel">'+fMX.format(n(c.imp))+'</td><td class="num km">'+f0(c.odo)+'</td>'+
+       '<td>'+accBtns('c',c.id)+'</td></tr>';
+  });
+  h+='</tbody><tfoot><tr><td colspan="4">TOTALES ('+cs.length+' cargas)</td><td class="num" style="color:var(--rojo)">'+f2(tl)+'</td><td></td><td class="num" style="color:var(--rojo)">'+fMX.format(ti)+'</td><td></td><td></td></tr></tfoot>';
+  $('tblCargas').innerHTML=h;
+}
+function renderMant(){
+  var ms=S.mants.filter(function(m){return enMes(m.fecha)}).slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'')});
+  var prop=0,ext=0;
+  ms.forEach(function(m){if(m.taller==='Externo')ext+=n(m.imp);else prop+=n(m.imp)});
+  $('kpiMant').innerHTML=
+   '<div class="kpi diesel"><span>Taller propio</span><b>'+fMX.format(prop)+'</b></div>'+
+   '<div class="kpi diesel"><span>Taller externo</span><b>'+fMX.format(ext)+'</b></div>'+
+   '<div class="kpi diesel"><span>Mantenimiento total</span><b>'+fMX.format(prop+ext)+'</b></div>';
+  var h='<thead><tr><th>Fecha</th><th>Unidad</th><th>Taller</th><th>Proveedor</th><th>Descripción</th><th>Importe $</th><th></th></tr></thead><tbody>';
+  ms.forEach(function(m){
+    h+='<tr><td>'+esc(m.fecha)+'</td><td><b>'+esc(m.eco)+'</b></td><td>'+(m.taller==='Externo'?'<span class="badge EXT">EXTERNO</span>':'<span class="badge PRO">PROPIO</span>')+'</td><td>'+esc(m.prov)+'</td><td>'+esc(m.des)+'</td><td class="num diesel">'+fMX.format(n(m.imp))+'</td><td>'+accBtns('m',m.id)+'</td></tr>';
+  });
+  h+='</tbody><tfoot><tr><td colspan="5">TOTAL ('+ms.length+' registros)</td><td class="num" style="color:var(--rojo)">'+fMX.format(prop+ext)+'</td><td></td></tr></tfoot>';
+  $('tblMant').innerHTML=h;
+}
+function renderUnidades(){
+  var h='<thead><tr><th>Económico</th><th>Placas</th><th>Operador</th><th>Base</th><th>Tanque L</th><th>Objetivo km/L</th><th>Rend. actual</th><th>Semáforo</th><th></th></tr></thead><tbody>';
+  S.unidades.forEach(function(u){
+    var r=rendUnidad(u.eco),c=semClase(r,u.obj);
+    var e=c==='v'?'🟢':c==='a'?'🟡':c==='r'?'🔴':'⚪';
+    h+='<tr><td><b>'+esc(u.eco)+'</b></td><td>'+esc(u.pla)+'</td><td>'+esc(u.op)+'</td><td>'+badge(u.base)+'</td><td class="num">'+f0(u.tan)+'</td><td class="num rend">'+f2(u.obj)+'</td><td class="num rend">'+(r==null?'N/D':f2(r))+'</td><td>'+e+'</td>'+
+       '<td>'+accBtns('u',u.eco)+'</td></tr>';
+  });
+  $('tblUnidades').innerHTML=h+'</tbody>';
+}
+function llenarSelects(){
+  var opU=S.unidades.map(function(u){return '<option value="'+esc(u.eco)+'">'+esc(u.eco)+' · '+esc(u.op||'')+'</option>'}).join('');
+  ['vEco','cEco','mEco'].forEach(function(id){var s=$(id),val=s.value;s.innerHTML=opU;if(val)s.value=val});
+  var opR='<option value="">— Elegir ruta —</option>'+S.rutas.map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.nom)+' ('+esc(r.base)+')</option>'}).join('');
+  var s=$('vRuta'),val=s.value;s.innerHTML=opR;if(val)s.value=val;
+}
+
+/* ================= BORRADO DOBLE TOQUE ================= */
+var pendDel=null,pendT=null;
+function del(t,id){
+  var k=t+'|'+id;
+  if(pendDel===k){
+    pendDel=null;clearTimeout(pendT);
+    ejecutarBorrado(t,id);
+    persistir();pintar();
+    return;
+  }
+  pendDel=k;pintar();
+  if(t==='seed'){$('btnSeed').textContent='¿Confirmar borrado del ejemplo?';}
+  clearTimeout(pendT);
+  pendT=setTimeout(function(){pendDel=null;if($('btnSeed'))$('btnSeed').textContent='Borrar datos de ejemplo';pintar()},4000);
+  toast('Toca de nuevo para confirmar el borrado');
+}
+function ejecutarBorrado(t,id){
+  var ts=ahora();
+  if(t==='v'){S.viajes=S.viajes.filter(function(x){return x.id!==id});S.del[id]=ts;toast('Viaje borrado')}
+  else if(t==='c'){S.cargas=S.cargas.filter(function(x){return x.id!==id});S.del[id]=ts;toast('Carga borrada')}
+  else if(t==='r'){S.rutas=S.rutas.filter(function(x){return x.id!==id});S.del[id]=ts;toast('Ruta borrada del tabulador')}
+  else if(t==='m'){S.mants=S.mants.filter(function(x){return x.id!==id});S.del[id]=ts;toast('Gasto de mantenimiento borrado')}
+  else if(t==='u'){S.unidades=S.unidades.filter(function(x){return x.eco!==id});S.del[id]=ts;toast('Unidad borrada (sus viajes y cargas se conservan)')}
+  else if(t==='seed'){
+    S.viajes.filter(function(v){return v.ej}).forEach(function(v){S.del[v.id]=ts});
+    S.cargas.filter(function(c){return c.ej}).forEach(function(c){S.del[c.id]=ts});
+    S.rutas.filter(function(r){return r.ej}).forEach(function(r){S.del[r.id]=ts});
+    S.mants.filter(function(m){return m.ej}).forEach(function(m){S.del[m.id]=ts});
+    S.viajes=S.viajes.filter(function(v){return !v.ej});
+    S.cargas=S.cargas.filter(function(c){return !c.ej});
+    S.rutas=S.rutas.filter(function(r){return !r.ej});
+    S.mants=S.mants.filter(function(m){return !m.ej});
+    if(S.seeded){['T-01','T-02','T-03'].forEach(function(e){S.del[e]=ts});S.unidades=S.unidades.filter(function(u){return ['T-01','T-02','T-03'].indexOf(u.eco)<0});S.seeded=false}
+    $('btnSeed').textContent='Borrar datos de ejemplo';
+    toast('Datos de ejemplo eliminados. Lista para operación real.');
+  }
+}
+
+/* ================= CRUD VIAJES ================= */
+function opAuto(){var u=S.unidades.find(function(x){return x.eco===$('vEco').value});if(u)$('vOp').value=u.op||''}
+function rutaAuto(){
+  var r=S.rutas.find(function(x){return x.id===$('vRuta').value});
+  if(!r)return;
+  $('vBase').value=r.base;$('vPton').value=r.pton;$('vCas').value=r.cas;$('vCom').value=r.com;
+  previewV();
+}
+function dieselAuto(){$('vDie').value=(n($('vLts').value)*n(S.cfg.precio)).toFixed(2)}
+function previewV(){
+  var sub=n($('vTon').value)*n($('vPton').value);
+  var iva=sub*n(S.cfg.iva)/100;
+  var ret=$('vRet').value==='1'?sub*n(S.cfg.ret)/100:0;
+  var tot=sub+iva-ret;
+  var uti=sub-n($('vDie').value)-n($('vCas').value)-n($('vCom').value);
+  $('pv').innerHTML='<span>Subtotal: <b>'+fMX.format(sub)+'</b></span><span>IVA '+f0(S.cfg.iva)+'%: <b>'+fMX.format(iva)+'</b></span><span>Retención '+f0(S.cfg.ret)+'%: <b>'+fMX.format(ret)+'</b></span><span>Total factura: <b>'+fMX.format(tot)+'</b></span><span class="u">Utilidad del viaje: <b>'+fMX.format(uti)+'</b></span>';
+}
+function guardarViaje(e){
+  e.preventDefault();
+  if(n($('vKmF').value)<n($('vKmI').value)){toast('El km final no puede ser menor que el km inicial.',1);return false}
+  var rr=S.rutas.find(function(x){return x.id===$('vRuta').value});
+  if(!rr){toast('Elige una ruta del tabulador (o dala de alta primero).',1);return false}
+  var o={id:$('vId').value||uid('v'),fecha:$('vFecha').value,eco:$('vEco').value,op:$('vOp').value,ruta:rr.nom,base:$('vBase').value,ton:n($('vTon').value),pton:n($('vPton').value),kmi:n($('vKmI').value),kmf:n($('vKmF').value),lts:n($('vLts').value),die:n($('vDie').value),cas:n($('vCas').value),com:n($('vCom').value),ret4:$('vRet').value==='1'?1:0,ts:ahora()};
+  var i=S.viajes.findIndex(function(x){return x.id===o.id});
+  if(i>=0)S.viajes[i]=o;else S.viajes.push(o);
+  limpiarV();persistir();pintar();toast('Viaje guardado');return false;
+}
+function editV(id){
+  var v=S.viajes.find(function(x){return x.id===id});if(!v)return;
+  tab('kardex');llenarSelects();
+  $('vId').value=v.id;$('vFecha').value=v.fecha;$('vEco').value=v.eco;$('vOp').value=v.op;
+  var r=S.rutas.find(function(x){return x.nom===v.ruta});$('vRuta').value=r?r.id:'';
+  $('vBase').value=v.base||'PUE';$('vTon').value=v.ton;$('vPton').value=v.pton;
+  $('vKmI').value=v.kmi;$('vKmF').value=v.kmf;$('vLts').value=v.lts;$('vDie').value=v.die;$('vCas').value=v.cas;$('vCom').value=v.com;$('vRet').value=v.ret4?'1':'0';
+  previewV();
+}
+function limpiarV(){['vId','vFecha','vOp','vKmI','vKmF','vLts','vDie','vTon','vPton'].forEach(function(i){$(i).value=''});$('vRuta').value='';$('vCas').value='0';$('vCom').value='0';$('vRet').value='1';$('pv').innerHTML='';}
+
+/* ================= CRUD RUTAS ================= */
+function guardarRuta(e){
+  e.preventDefault();
+  var o={id:$('rId').value||uid('r'),nom:$('rNom').value.trim(),base:$('rBase').value,pton:n($('rPton').value),com:n($('rCom').value),cas:n($('rCas').value),km:n($('rKm').value),ts:ahora()};
+  if(!$('rId').value&&S.rutas.some(function(r){return r.nom.toLowerCase()===o.nom.toLowerCase()})){toast('Ya existe una ruta con ese nombre en el tabulador.',1);return false}
+  var i=S.rutas.findIndex(function(x){return x.id===o.id});
+  if(i>=0)S.rutas[i]=o;else S.rutas.push(o);
+  limpiarR();persistir();pintar();toast('Ruta guardada en el tabulador');return false;
+}
+function editR(id){var r=S.rutas.find(function(x){return x.id===id});if(!r)return;tab('rutas');$('rId').value=r.id;$('rNom').value=r.nom;$('rBase').value=r.base;$('rPton').value=r.pton;$('rCom').value=r.com;$('rCas').value=r.cas;$('rKm').value=r.km}
+function limpiarR(){['rId','rNom'].forEach(function(i){$(i).value=''});$('rPton').value='';$('rCom').value='';$('rCas').value='0';$('rKm').value='0'}
+
+/* ================= CRUD CARGAS ================= */
+function impAuto(){$('cImp').value=(n($('cLts').value)*n($('cPre').value)).toFixed(2)}
+function guardarCarga(e){
+  e.preventDefault();
+  var o={id:$('cId').value||uid('c'),fecha:$('cFecha').value,eco:$('cEco').value,fol:$('cFolio').value,est:$('cEst').value,lts:n($('cLts').value),pre:n($('cPre').value),imp:n($('cImp').value)||n($('cLts').value)*n($('cPre').value),odo:n($('cOdo').value),ts:ahora()};
+  var i=S.cargas.findIndex(function(x){return x.id===o.id});
+  if(i>=0)S.cargas[i]=o;else S.cargas.push(o);
+  limpiarC();persistir();pintar();toast('Carga guardada');return false;
+}
+function editC(id){var c=S.cargas.find(function(x){return x.id===id});if(!c)return;tab('cargas');llenarSelects();$('cId').value=c.id;$('cFecha').value=c.fecha;$('cEco').value=c.eco;$('cFolio').value=c.fol;$('cEst').value=c.est;$('cLts').value=c.lts;$('cPre').value=c.pre;$('cImp').value=c.imp;$('cOdo').value=c.odo}
+function limpiarC(){['cId','cFecha','cFolio','cEst','cLts','cPre','cImp','cOdo'].forEach(function(i){$(i).value=''})}
+
+/* ================= CRUD MANTENIMIENTO ================= */
+function guardarMant(e){
+  e.preventDefault();
+  var o={id:$('mId').value||uid('m'),fecha:$('mFecha').value,eco:$('mEco').value,taller:$('mTaller').value,prov:$('mTaller').value==='Externo'?$('mProv').value:'',des:$('mDes').value,imp:n($('mImp').value),ts:ahora()};
+  var i=S.mants.findIndex(function(x){return x.id===o.id});
+  if(i>=0)S.mants[i]=o;else S.mants.push(o);
+  limpiarM();persistir();pintar();toast('Gasto de mantenimiento guardado');return false;
+}
+function editM(id){var m=S.mants.find(function(x){return x.id===id});if(!m)return;tab('mant');llenarSelects();$('mId').value=m.id;$('mFecha').value=m.fecha;$('mEco').value=m.eco;$('mTaller').value=m.taller||'Propio';$('mProv').value=m.prov||'';$('mDes').value=m.des;$('mImp').value=m.imp}
+function limpiarM(){['mId','mFecha','mDes','mImp','mProv'].forEach(function(i){$(i).value=''});$('mTaller').value='Propio'}
+
+/* ================= CRUD UNIDADES ================= */
+function guardarUnidad(e){
+  e.preventDefault();
+  var o={eco:$('uEco').value.trim(),pla:$('uPla').value,op:$('uOp').value,base:$('uBase').value,tan:n($('uTan').value),obj:n($('uObj').value),ts:ahora()};
+  var ix=$('uIdx').value;
+  if(ix!==''){S.unidades[+ix]=o}else{
+    if(S.unidades.some(function(u){return u.eco===o.eco})){toast('Ya existe una unidad con ese económico.',1);return false}
+    S.unidades.push(o);
+  }
+  delete S.del[o.eco];
+  limpiarU();persistir();pintar();toast('Unidad guardada');return false;
+}
+function editU(eco){var i=S.unidades.findIndex(function(x){return x.eco===eco});if(i<0)return;var u=S.unidades[i];tab('unidades');$('uIdx').value=i;$('uEco').value=u.eco;$('uPla').value=u.pla;$('uOp').value=u.op;$('uBase').value=u.base;$('uTan').value=u.tan;$('uObj').value=u.obj}
+function limpiarU(){$('uIdx').value='';['uEco','uPla','uOp'].forEach(function(i){$(i).value=''});$('uBase').value='PUE';$('uTan').value='400';$('uObj').value='2.60'}
+
+/* ================= AJUSTES ================= */
+function renderCfg(){var c=S.cfg;$('gPre').value=c.precio;$('gIva').value=c.iva;$('gRet').value=c.ret;$('gTa').value=c.ta;$('gTr').value=c.tr;
+  $('txtModo').innerHTML='<b>🌐 Aplicación de equipo en servidor.</b> Todos entran a la misma dirección (URL) desde el celular o la PC y capturan sobre los mismos datos: Tráfico los viajes, el Analista de Combustible las cargas y Mantenimiento sus gastos. Si el coordinador configuró clave de equipo, la app la pide una sola vez por dispositivo.';
+}
+function guardarCfg(e){e.preventDefault();S.cfg={precio:n($('gPre').value),iva:n($('gIva').value),ret:n($('gRet').value),ta:n($('gTa').value),tr:n($('gTr').value),ts:ahora()};persistir();pintar();toast('Parámetros guardados');return false}
+
+/* ================= EXPORTAR / RESPALDO ================= */
+function descarga(nombre,contenido,tipo){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([contenido],{type:tipo}));a.download=nombre;a.click()}
+function csv(t){
+  var filas,cab;
+  if(t==='viajes'){cab=['Fecha','Unidad','Operador','Base','Ruta','Toneladas','PrecioTon','Subtotal','IVA','Retencion','TotalFactura','KmInicial','KmFinal','KmRecorridos','Litros','CostoDiesel','Casetas','ComisionOperador','Utilidad'];
+    filas=fV().map(function(v){return [v.fecha,v.eco,v.op,v.base,v.ruta,v.ton,v.pton,subViaje(v).toFixed(2),ivaViaje(v).toFixed(2),retViaje(v).toFixed(2),totViaje(v).toFixed(2),v.kmi,v.kmf,kmViaje(v),v.lts,v.die,v.cas,v.com,utilViaje(v).toFixed(2)]})}
+  else if(t==='rutas'){cab=['Ruta','Base','PrecioTonelada','ComisionOperador','CasetasRef','KmRef'];
+    filas=S.rutas.map(function(r){return [r.nom,r.base,r.pton,r.com,r.cas,r.km]})}
+  else if(t==='mants'){cab=['Fecha','Unidad','Taller','Proveedor','Descripcion','Importe'];
+    filas=S.mants.filter(function(m){return enMes(m.fecha)}).map(function(m){return [m.fecha,m.eco,m.taller,m.prov,m.des,m.imp]})}
+  else{cab=['Fecha','Unidad','Folio','Estacion','Litros','PrecioL','Importe','Odometro'];
+    filas=S.cargas.filter(function(c){return enMes(c.fecha)}).map(function(c){return [c.fecha,c.eco,c.fol,c.est,c.lts,c.pre,c.imp,c.odo]})}
+  var txt='\ufeff'+cab.join(',')+'\n'+filas.map(function(f){return f.map(function(x){return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
+  descarga(t+'_flota_union.csv',txt,'text/csv');
+  toast('CSV descargado: ábrelo en Excel');
+}
+function expJson(){descarga('respaldo_flota_union_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(S,null,1),'application/json');toast('Respaldo descargado')}
+function impJson(inp){
+  var f=inp.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(){try{var d=JSON.parse(r.result);if(d&&d.unidades&&d.viajes&&d.cargas){S=normalizar(d);persistir();pintar();toast('Respaldo restaurado correctamente')}else toast('El archivo no parece un respaldo válido.',1)}catch(e){toast('No se pudo leer el respaldo.',1)}};
+  r.readAsText(f);inp.value='';
+}
+
+/* ================= INICIO ================= */
+function loadLocal(){try{var r=localStorage.getItem(LK);if(r)return normalizar(JSON.parse(r))}catch(e){}return null}
+(async function(){
+  S=loadLocal()||seed();
+  setModo('🌐 Conectando con el servidor…');
+  try{
+    var fus=await api(S);
+    S=normalizar(fus);servidorOK=true;guardarLocal();
+    setModo('🌐 Equipo · al día '+hora());
+  }catch(e){
+    servidorOK=false;
+    setModo('🌐 Sin conexión · trabajando local',1);
+    if(!lsOk())document.getElementById('avisoMem').style.display='block';
+  }
+  setInterval(function(){if(!guardando)actualizar(true)},60000);
+  var hoy=new Date();
+  $('fMes').value=hoy.toISOString().slice(0,7);
+  if(!S.viajes.some(function(v){return enMes(v.fecha)})&&!S.cargas.some(function(c){return enMes(c.fecha)}))$('fMes').value='';
+  pintar();
+})();
+</script>
+</body>
+</html>

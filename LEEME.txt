@@ -1,0 +1,66 @@
+FLOTA DE VIAJE UNION 2026 - APLICACION DE EQUIPO (Kardex / Combustible / Mantenimiento)
+=======================================================================================
+
+Que es: una aplicacion web con servidor propio. Todo tu equipo entra a la misma
+direccion desde el navegador (PC o celular) y captura sobre los mismos datos.
+
+CONTENIDO
+  server.js          servidor (Node.js + Express)
+  package.json       dependencias
+  public/index.html  la aplicacion completa
+  data/flota.json    aqui se guardan los datos (se crea solo, en modo archivo)
+
+---------------------------------------------------------------
+OPCION A - SERVIDOR EN LA OFICINA (hoy mismo, gratis)
+---------------------------------------------------------------
+1) Instala Node.js LTS en una PC que se quede encendida: https://nodejs.org
+2) En la carpeta de la app abre una terminal y ejecuta:
+      npm install
+      npm start
+3) En esa PC abre:  http://localhost:3000
+4) Tu equipo, en la misma red de la oficina, entra con la IP de esa PC:
+      http://IP-DE-LA-PC:3000      (la IP se ve con el comando:  ipconfig)
+Los datos quedan en data/flota.json - respalda ese archivo (o usa el boton
+"Descargar respaldo JSON" de la app) cada viernes.
+
+---------------------------------------------------------------
+OPCION B - INTERNET (Render, gratis) - acceso desde cualquier lugar
+---------------------------------------------------------------
+1) Sube esta carpeta a un repositorio de GitHub.
+2) En Render: New -> Web Service -> conecta el repo.
+      Build command:  npm install
+      Start command:  npm start
+3) IMPORTANTE (plan gratis de Render): el disco se borra en cada reinicio.
+   Para NO perder datos conecta una base gratuita de Supabase:
+      a) Crea un proyecto gratis en https://supabase.com
+      b) En SQL Editor pega y ejecuta:
+             create table estado (k text primary key, v jsonb);
+      c) En Settings -> API copia la URL del proyecto y la llave "service_role".
+      d) En Render -> Environment agrega estas variables:
+             SUPABASE_URL   = https://TUPROYECTO.supabase.co
+             SUPABASE_KEY   = (la llave service_role)
+             CLAVE_EQUIPO   = una-clave-para-tu-gente
+      e) Manual Deploy -> Deploy latest commit.
+4) Comparte la direccion https://tu-servicio.onrender.com con tu equipo.
+   Nota: en plan gratis el servidor "duerme" tras 15 min sin uso; la primera
+   visita del dia tarda ~1 minuto en despertar. Con Supabase los datos NO se pierden.
+
+---------------------------------------------------------------
+CLAVE DE EQUIPO Y SEGURIDAD
+---------------------------------------------------------------
+- Si defines CLAVE_EQUIPO, la app la pide una sola vez por dispositivo.
+  Sin la clave correcta nadie puede leer ni capturar tus datos.
+  En la oficina puedes arrancar asi:
+      Windows PowerShell:   $env:CLAVE_EQUIPO="miclave"; npm start
+      Linux/Mac:            CLAVE_EQUIPO=miclave npm start
+- Cambia la clave cuando alguien salga del equipo.
+- Respaldo: boton "Descargar respaldo JSON" en Ajustes, cada viernes, a Drive.
+
+---------------------------------------------------------------
+COMO FUNCIONA LA SINCRONIZACION
+---------------------------------------------------------------
+- Cada guardado viaja al servidor y regresa fusionado: todos quedan al dia.
+- La app se actualiza sola cada minuto y con el boton Actualizar.
+- Si dos personas editan el MISMO renglon, se conserva el cambio mas reciente.
+- Sin internet, tus capturas quedan en tu navegador y se envian al reconectar.
+- El ejemplo precargado (T-01/T-02/T-03, julio) se borra en Ajustes -> boton rojo (doble toque).
